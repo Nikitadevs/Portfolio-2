@@ -1,0 +1,430 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Styles */
+body {
+  font-family: 'Montserrat', sans-serif;
+  line-height: 1.6;
+  padding-top: 4rem; /* To offset the fixed header */
+  margin: 0;
+  background-color: #ffffff; /* Default light mode background */
+  color: #333333; /* Default light mode text color */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+/* Ensuring consistent height for project cards */
+
+h1, h2, h3 {
+  margin-top: 0;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.bg-cover {
+  background-size: cover;
+}
+
+.bg-center {
+  background-position: center;
+}
+
+.fixed {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+}
+
+/* Animations */
+.underline-animation {
+  position: relative;
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.underline-animation::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #ffcc00; /* Change this to your desired color */
+  visibility: hidden;
+  transform: scaleX(0);
+  transition: all 0.3s ease-in-out;
+}
+
+.underline-animation:hover::after,
+.underline-animation:focus::after {
+  visibility: visible;
+  transform: scaleX(1);
+}
+
+/* Skills Progress Bar */
+.skill-progress {
+  position: relative;
+  width: 100%;
+  height: 1rem;
+  background-color: #e0e0e0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.skill-progress-bar {
+  height: 100%;
+  background-color: #3b82f6; /* Tailwind blue-500 */
+  border-radius: 0.5rem;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Shadows */
+.shadow-lg {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Transitions */
+.transition-transform {
+  transition: transform 0.3s ease;
+}
+
+.transform {
+  transform: scale(1);
+}
+
+.transform:hover {
+  transform: scale(1.05);
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.hamburger {
+  width: 30px;
+  height: 20px;
+  position: relative;
+  cursor: pointer;
+}
+
+.line {
+  width: 100%;
+  height: 4px;
+  background-color: white;
+  position: absolute;
+  left: 0;
+  border-radius: 2px;
+}
+
+.line1 {
+  top: 0;
+}
+
+.line2 {
+  top: 8px;
+}
+
+.line3 {
+  bottom: 0;
+}
+
+.open .line1 {
+  transform: rotate(45deg);
+  top: 8px;
+}
+
+.open .line2 {
+  opacity: 0;
+}
+
+.open .line3 {
+  transform: rotate(-45deg);
+  bottom: 8px;
+}
+
+/* Scroll To Top/Bottom Button */
+.scroll-to-top-bottom {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 50;
+}
+
+.scroll-to-top-bottom-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 2px solid #3b82f6;
+  border-radius: 50%;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scroll-to-top-bottom-button:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.progress-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 3.8;
+}
+
+.header-social-icons a {
+  display: inline-block;
+  transition: transform 0.3s ease-in-out;
+}
+
+.header-social-icons a:hover {
+  transform: scale(1.2);
+}
+
+.fixed.sidebar {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease-in-out;
+  z-index: 40;
+}
+
+.circle {
+  fill: none;
+  stroke-width: 3.8;
+  stroke: #3b82f6;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s ease;
+}
+
+/* Project Cards */
+.project-card img {
+  transition: transform 0.3s ease-in-out;
+}
+
+.project-card:hover img {
+  transform: scale(1.1);
+}
+
+.project-card:hover {
+  transform: translateY(-10px);
+}
+
+/* About Section */
+.about-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out;
+}
+
+.about-card:hover {
+  transform: translateY(-10px);
+}
+
+.about-card:hover .icon {
+  transform: rotate(20deg);
+}
+
+.icon {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Utility Classes */
+.relative {
+  position: relative;
+}
+
+.text-react-blue {
+  color: #61DBFB; /* React's official color */
+}
+
+.text-tailwind-blue {
+  color: #38B2AC; /* Tailwind CSS's official color */
+}
+
+#hero .text-4xl {
+  font-size: 2.5rem;
+}
+
+#hero .text-6xl {
+  font-size: 4rem;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.h-screen {
+  height: 100vh;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-white {
+  color: white;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mr-4 {
+  margin-right: 1rem;
+}
+
+.text-4xl {
+  font-size: 2.25rem;
+}
+
+.text-5xl {
+  font-size: 3rem;
+}
+
+.md\:text-5xl {
+  font-size: 3rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.md\:text-xl {
+  font-size: 1.25rem;
+}
+
+.bg-black {
+  background-color: black;
+}
+
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.profile h2 {
+  font-size: 3rem;
+}
+
+.profile p {
+  font-size: 1.5rem;
+}
+
+.profile button {
+  padding: 0.75rem 1.5rem;
+}
+
+.about-section h2 {
+  font-size: 3rem;
+}
+
+.about-section p {
+  font-size: 1.5rem;
+}
+
+/* Animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 10s linear infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-10%);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 4s infinite;
+}
+
+.delay-2000 {
+  animation-delay: 2s;
+}
+
+#hero {
+  position: relative;
+  overflow: hidden;
+}
+
+#hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+  z-index: 0;
+}
