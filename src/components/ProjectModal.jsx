@@ -3,7 +3,7 @@ import { useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faExternalLinkAlt, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faTimes,faCode } from '@fortawesome/free-solid-svg-icons';
 import useFocusTrap from './useFocusTrap';
 import ImageCarousel from './ImageCarousel';
 
@@ -124,22 +124,6 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-                {project.link && (
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center justify-center w-full sm:w-auto bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 hover:bg-blue-700 focus:outline-none focus:ring-4 ${
-                      darkMode
-                        ? 'focus:ring-blue-300'
-                        : 'focus:ring-blue-500'
-                    }`}
-                    aria-label={`View ${project.title} live`}
-                  >
-                    <FontAwesomeIcon icon={faExternalLinkAlt} className="mr-2" />
-                    View Live
-                  </a>
-                )}
                 {project.codeLink && (
                   <a
                     href={project.codeLink}
@@ -186,7 +170,7 @@ ProjectModal.propTypes = {
     images: PropTypes.arrayOf(PropTypes.string),
     description: PropTypes.string.isRequired,
     technologies: PropTypes.arrayOf(PropTypes.string),
-    link: PropTypes.string,
+    // Removed 'link' since it's no longer used
     codeLink: PropTypes.string,
   }).isRequired,
   darkMode: PropTypes.bool.isRequired,

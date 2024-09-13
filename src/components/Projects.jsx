@@ -14,8 +14,9 @@ const projects = [
     description:
       'Automated the build, test, and deployment process for a microservices architecture using Jenkins and Docker. Set up a CI/CD pipeline to deploy updates seamlessly.',
     image: 'https://via.placeholder.com/400x200',
-    link: 'https://example.com/cicd-project',
+    // Removed 'link' since "View Live" is no longer needed
     codeLink: 'https://github.com/example/cicd-project',
+    technologies: ['Jenkins', 'Docker', 'Kubernetes', 'Git', 'Terraform'],
   },
   {
     id: 'terraform-infrastructure',
@@ -23,8 +24,8 @@ const projects = [
     description:
       'Provisioned cloud resources using Terraform to create an auto-scaling, fault-tolerant infrastructure on AWS, including EC2, S3, and RDS.',
     image: 'https://via.placeholder.com/400x200',
-    link: 'https://example.com/terraform-project',
     codeLink: 'https://github.com/example/terraform-project',
+    technologies: ['Terraform', 'AWS', 'EC2', 'S3', 'RDS'],
   },
   {
     id: 'kubernetes-monitoring',
@@ -32,14 +33,15 @@ const projects = [
     description:
       'Set up real-time monitoring and alerting for a Kubernetes cluster using Prometheus and Grafana. Created dashboards for visualizing resource utilization and system health.',
     image: 'https://via.placeholder.com/400x200',
-    link: 'https://example.com/monitoring-project',
     codeLink: 'https://github.com/example/monitoring-project',
+    technologies: ['Kubernetes', 'Prometheus', 'Grafana', 'Docker', 'Linux'],
   },
 ];
 
 // Memoized ProjectCard to prevent unnecessary re-renders
+// eslint-disable-next-line react/display-name
 const ProjectCard = memo(({ project, darkMode, onClick }) => {
-  const { title, description, image, link } = project;
+  const { title, description, image } = project;
 
   return (
     <motion.div
@@ -87,17 +89,20 @@ const ProjectCard = memo(({ project, darkMode, onClick }) => {
           >
             View Project
           </button>
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center w-full sm:w-auto text-center text-blue-500 hover:text-blue-600 transition duration-300 focus:outline-none"
-            aria-label={`Open ${title} in a new tab`}
-            onClick={(e) => e.stopPropagation()} // Prevent triggering card's onClick
-          >
-            <span className="mr-1 text-sm sm:text-base">Live Demo</span>
-            <FontAwesomeIcon icon={faExternalLinkAlt} />
-          </a>
+          {/* Removed the "Live Demo" link since it's no longer needed */}
+          {project.codeLink && (
+            <a
+              href={project.codeLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-full sm:w-auto text-center text-green-500 hover:text-green-600 transition duration-300 focus:outline-none"
+              aria-label={`View ${title} code in a new tab`}
+              onClick={(e) => e.stopPropagation()} // Prevent triggering card's onClick
+            >
+              <span className="mr-1 text-sm sm:text-base">View Code</span>
+              <FontAwesomeIcon icon={faExternalLinkAlt} />
+            </a>
+          )}
         </div>
       </div>
     </motion.div>
@@ -110,8 +115,9 @@ ProjectCard.propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     image: PropTypes.string.isRequired,
-    link: PropTypes.string.isRequired,
+    // Removed 'link' since "View Live" is no longer used
     codeLink: PropTypes.string,
+    technologies: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   darkMode: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
