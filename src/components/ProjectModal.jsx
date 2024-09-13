@@ -1,8 +1,9 @@
+// ProjectModal.jsx
 import { useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faExternalLinkAlt, faCode } from '@fortawesome/free-solid-svg-icons';
 import useFocusTrap from './useFocusTrap';
 import ImageCarousel from './ImageCarousel';
 
@@ -12,12 +13,14 @@ const backdropVariants = {
 };
 
 const modalVariants = {
-  hidden: { y: '-50%', opacity: 0 },
-  visible: { y: '0%', opacity: 1 },
+  hidden: { y: "-100vh", opacity: 0, scale: 0.8 },
+  visible: { y: "0", opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 25 } },
+  exit: { y: "100vh", opacity: 0, scale: 0.8, transition: { type: 'spring', stiffness: 300, damping: 25 } },
 };
 
 const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
   const modalRef = useRef(null);
+  const triggerRef = useRef(document.activeElement);
 
   useFocusTrap(modalRef, isOpen);
 
@@ -28,6 +31,8 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
       };
       document.addEventListener('keydown', onEscKeyDown);
       return () => document.removeEventListener('keydown', onEscKeyDown);
+    } else if (triggerRef.current) {
+      triggerRef.current.focus();
     }
   }, [isOpen, onClose]);
 
@@ -35,7 +40,7 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 sm:p-0"
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -46,18 +51,19 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
         >
           <motion.div
             ref={modalRef}
-            className={`relative max-w-lg w-full mx-2 sm:mx-4 p-4 sm:p-6 rounded-lg shadow-lg overflow-y-auto max-h-[90vh] ${
-              darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+            className={`relative max-w-3xl w-full mx-auto p-6 rounded-lg shadow-xl overflow-y-auto max-h-[90vh] ${
+              darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
             }`}
             variants={modalVariants}
             initial="hidden"
             animate="visible"
-            exit="hidden"
+            exit="exit"
             role="document"
           >
+            {/* Close Button */}
             <button
               onClick={onClose}
-              className={`absolute top-3 right-3 text-xl p-2 rounded-full focus:outline-none focus:ring-2 ${
+              className={`absolute top-4 right-4 text-2xl p-2 rounded-full focus:outline-none focus:ring-2 ${
                 darkMode
                   ? 'text-gray-300 hover:text-gray-500 focus:ring-gray-500'
                   : 'text-gray-700 hover:text-gray-900 focus:ring-gray-300'
@@ -66,47 +72,71 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
             >
               <FontAwesomeIcon icon={faTimes} />
             </button>
-            <div className="modal-content">
+
+            {/* Modal Content */}
+            <div className="modal-content mt-6">
               <h2
                 id="modal-title"
-                className="text-xl sm:text-2xl font-bold mb-4 text-center"
+                className="text-2xl sm:text-3xl font-bold mb-6 text-center"
               >
                 {project.title}
               </h2>
-              {project.images ? (
+
+              {/* Image or Carousel */}
+              {project.images && project.images.length > 0 ? (
                 <ImageCarousel images={project.images} />
-              ) : (
-                <div className="mb-4 sm:mb-6">
+              ) : project.image ? (
+                <div className="mb-6">
                   <img
                     src={project.image}
                     alt={`Screenshot of ${project.title}`}
-                    className="w-full h-40 sm:h-60 object-cover rounded-lg shadow-md"
+                    className="w-full h-60 sm:h-80 object-cover rounded-lg shadow-md"
                     loading="lazy"
                   />
                 </div>
-              )}
-              <p className="text-sm sm:text-base mb-4 leading-relaxed">
+              ) : null}
+
+              {/* Description */}
+              <p className="text-base sm:text-lg mb-6 leading-relaxed text-justify">
                 {project.description}
               </p>
-              {project.technologies && (
-                <div className="text-sm mb-4 text-center">
-                  <strong>Technologies Used:</strong>{' '}
-                  {project.technologies.join(', ')}
+
+              {/* Technologies Used */}
+              {project.technologies && project.technologies.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Technologies Used:</h3>
+                  <ul className="flex flex-wrap gap-2">
+                    {project.technologies.map((tech, index) => (
+                      <li
+                        key={index}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          darkMode
+                            ? 'bg-gray-700 text-gray-300'
+                            : 'bg-gray-200 text-gray-800'
+                        }`}
+                      >
+                        {tech}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
-              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
                 {project.link && (
                   <a
                     href={project.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-center transition-colors duration-300 focus:outline-none focus:ring-4 ${
+                    className={`flex items-center justify-center w-full sm:w-auto bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 hover:bg-blue-700 focus:outline-none focus:ring-4 ${
                       darkMode
-                        ? 'hover:bg-blue-700 focus:ring-blue-300'
-                        : 'hover:bg-blue-700 focus:ring-blue-500'
+                        ? 'focus:ring-blue-300'
+                        : 'focus:ring-blue-500'
                     }`}
                     aria-label={`View ${project.title} live`}
                   >
+                    <FontAwesomeIcon icon={faExternalLinkAlt} className="mr-2" />
                     View Live
                   </a>
                 )}
@@ -115,23 +145,25 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
                     href={project.codeLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-center transition-colors duration-300 focus:outline-none focus:ring-4 ${
+                    className={`flex items-center justify-center w-full sm:w-auto bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 hover:bg-green-700 focus:outline-none focus:ring-4 ${
                       darkMode
-                        ? 'hover:bg-green-700 focus:ring-green-300'
-                        : 'hover:bg-green-700 focus:ring-green-500'
+                        ? 'focus:ring-green-300'
+                        : 'focus:ring-green-500'
                     }`}
                     aria-label={`View ${project.title} code`}
                   >
+                    <FontAwesomeIcon icon={faCode} className="mr-2" />
                     View Code
                   </a>
                 )}
                 <button
                   onClick={onClose}
-                  className={`w-full sm:w-auto bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-center transition-colors duration-300 focus:outline-none focus:ring-4 ${
+                  className={`flex items-center justify-center w-full sm:w-auto bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 hover:bg-gray-700 focus:outline-none focus:ring-4 ${
                     darkMode
-                      ? 'hover:bg-gray-700 focus:ring-gray-300'
-                      : 'hover:bg-gray-700 focus:ring-gray-500'
+                      ? 'focus:ring-gray-300'
+                      : 'focus:ring-gray-500'
                   }`}
+                  aria-label="Close modal"
                 >
                   Close
                 </button>
@@ -148,6 +180,7 @@ ProjectModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   project: PropTypes.shape({
+    id: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     image: PropTypes.string,
     images: PropTypes.arrayOf(PropTypes.string),
@@ -156,11 +189,7 @@ ProjectModal.propTypes = {
     link: PropTypes.string,
     codeLink: PropTypes.string,
   }).isRequired,
-  darkMode: PropTypes.bool,
-};
-
-ProjectModal.defaultProps = {
-  darkMode: false,
+  darkMode: PropTypes.bool.isRequired,
 };
 
 export default memo(ProjectModal);

@@ -86,7 +86,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
   };
 
   const hoverAnimation = {
-    scale: 1.05,
+    scale: 1.1,
     transition: { duration: 0.2 },
   };
 
@@ -107,19 +107,25 @@ const Header = ({ toggleDarkMode, darkMode }) => {
   };
 
   const socialLinksVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    hidden: { opacity: 0, y: 20, scale: 0.8 },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: { duration: 0.4, ease: 'easeOut' },
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
     },
     exit: {
       opacity: 0,
       y: 20,
-      scale: 0.95,
-      transition: { duration: 0.3, ease: 'easeIn' },
+      scale: 0.8,
+      transition: { staggerChildren: 0.05, staggerDirection: -1 },
     },
+  };
+
+  const individualSocialVariant = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 10 },
   };
 
   const sidebarVariants = {
@@ -157,7 +163,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
               className={`relative flex items-center group ${
                 activeSection === section ? 'text-yellow-400' : ''
               }`}
-              whileHover={hoverAnimation}
+              whileHover={{ scale: 1.05 }}
             >
               <FontAwesomeIcon
                 icon={
@@ -182,38 +188,76 @@ const Header = ({ toggleDarkMode, darkMode }) => {
           <AnimatePresence>
             {showSocialLinks && (
               <motion.div
+                className="flex items-center space-x-4"
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 variants={socialLinksVariants}
-                className="flex items-center space-x-4"
               >
+                {/* GitHub */}
                 <motion.a
                   href="https://github.com/your-profile"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline"
+                  className="relative group"
+                  variants={individualSocialVariant}
                   whileHover={hoverAnimation}
                 >
                   <FontAwesomeIcon icon={faGithub} className="text-2xl md:text-3xl" />
+                  {/* Tooltip */}
+                  <motion.span
+                    className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    GitHub
+                  </motion.span>
                 </motion.a>
+
+                {/* Instagram */}
                 <motion.a
                   href="https://www.instagram.com/veretenko_06/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline"
+                  className="relative group"
+                  variants={individualSocialVariant}
                   whileHover={hoverAnimation}
                 >
                   <FontAwesomeIcon icon={faInstagram} className="text-2xl md:text-3xl" />
+                  {/* Tooltip */}
+                  <motion.span
+                    className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    Instagram
+                  </motion.span>
                 </motion.a>
+
+                {/* LinkedIn */}
                 <motion.a
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline"
+                  className="relative group"
+                  variants={individualSocialVariant}
                   whileHover={hoverAnimation}
                 >
                   <FontAwesomeIcon icon={faLinkedin} className="text-2xl md:text-3xl" />
+                  {/* Tooltip */}
+                  <motion.span
+                    className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    LinkedIn
+                  </motion.span>
                 </motion.a>
               </motion.div>
             )}
@@ -223,7 +267,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
           <motion.button
             className="hover:underline flex items-center px-4 py-2 bg-yellow-400 text-black font-bold rounded-full transition duration-300 hover:bg-yellow-500"
             onClick={handleSocialLinksToggle}
-            whileHover={hoverAnimation}
+            whileHover={{ scale: 1.05 }}
           >
             <FontAwesomeIcon icon={faUserFriends} className="mr-2" />
             {showSocialLinks ? 'Close' : 'Social'}
@@ -235,7 +279,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
           <motion.button
             onClick={handleModeToggle}
             className="hidden lg:flex items-center px-4 py-2 rounded-full bg-yellow-400 text-black font-bold transition duration-300 hover:bg-yellow-500 space-x-2"
-            whileHover={hoverAnimation}
+            whileHover={{ scale: 1.05 }}
             aria-label="Toggle Dark Mode"
           >
             <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
@@ -285,9 +329,11 @@ const Header = ({ toggleDarkMode, darkMode }) => {
               animate="visible"
               exit="exit"
               variants={sidebarVariants}
-              className={`fixed top-0 right-0 h-full w-64 ${
-                darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
-              } p-6 overflow-y-auto z-50 shadow-lg`}
+              className={`fixed top-0 right-0 h-full w-80 ${
+                darkMode
+                  ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200'
+                  : 'bg-gradient-to-b from-white to-gray-100 text-gray-800'
+              } p-6 overflow-y-auto z-50 shadow-lg rounded-l-lg`}
             >
               {/* Sidebar Header */}
               <div className="flex justify-between items-center mb-6">
@@ -304,7 +350,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-2xl"
+                  className="text-2xl focus:outline-none"
                   aria-label="Close Menu"
                 >
                   <FontAwesomeIcon icon={faTimes} />
@@ -317,11 +363,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                   <motion.a
                     key={index}
                     href={`#${section}`}
-                    className={`flex items-center py-3 px-4 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                      activeSection === section ? 'bg-gray-200 dark:bg-gray-700' : ''
+                    className={`flex items-center py-3 px-4 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+                      activeSection === section
+                        ? 'bg-gray-300 dark:bg-gray-600'
+                        : ''
                     }`}
                     onClick={handleToggle}
-                    whileHover={hoverAnimation}
+                    variants={individualSocialVariant}
+                    whileHover={{ scale: 1.05 }}
                   >
                     <FontAwesomeIcon
                       icon={
@@ -333,22 +382,25 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                           ? faTools
                           : faEnvelope
                       }
-                      className="mr-3"
+                      className="mr-3 text-lg"
                     />
-                    {section.charAt(0).toUpperCase() + section.slice(1)}
+                    <span className="text-lg">
+                      {section.charAt(0).toUpperCase() + section.slice(1)}
+                    </span>
                   </motion.a>
                 ))}
               </div>
 
               {/* Divider */}
-              <div className="my-6 border-t border-gray-600"></div>
+              <div className="my-6 border-t border-gray-500"></div>
 
-              {/* Sidebar Dark Mode Toggle */}
-              <div className="mt-4 flex flex-col items-start">
+              {/* Sidebar Dark Mode and Social Toggles */}
+              <div className="mt-4 flex flex-col items-start space-y-4">
+                {/* Dark Mode Toggle */}
                 <motion.button
                   onClick={handleModeToggle}
-                  className="flex items-center justify-center w-full px-4 py-2 rounded-full bg-yellow-400 text-black font-bold transition duration-300 hover:bg-yellow-500 space-x-2"
-                  whileHover={hoverAnimation}
+                  className="flex items-center px-4 py-2 rounded-full bg-yellow-400 text-black font-bold transition duration-300 hover:bg-yellow-500 space-x-2"
+                  whileHover={{ scale: 1.05 }}
                   aria-label="Toggle Dark Mode"
                 >
                   <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
@@ -369,51 +421,66 @@ const Header = ({ toggleDarkMode, darkMode }) => {
 
                 {/* Social Toggle Button */}
                 <motion.button
-                  className="w-full mt-4 px-4 py-2 bg-yellow-400 text-black font-bold rounded-full hover:bg-yellow-500 transition duration-300 flex items-center justify-center"
+                  className="flex items-center px-4 py-2 bg-yellow-400 text-black font-bold rounded-full hover:bg-yellow-500 transition duration-300"
                   onClick={handleSocialLinksToggle}
-                  whileHover={hoverAnimation}
+                  whileHover={{ scale: 1.05 }}
+                  aria-label="Toggle Social Links"
                 >
                   <FontAwesomeIcon icon={faUserFriends} className="mr-2" />
-                  {showSocialLinks ? 'Close' : 'Social'}
+                  {showSocialLinks ? 'Close Social' : 'Social'}
                 </motion.button>
 
-                {/* Social Links in Sidebar */}
+                {/* Enhanced Social Links in Sidebar */}
                 <AnimatePresence>
                   {showSocialLinks && (
                     <motion.div
-                      className="mt-4 flex space-x-4 w-full justify-between"
+                      className="mt-4 flex space-x-4 justify-center w-full"
                       initial="hidden"
                       animate="visible"
                       exit="exit"
                       variants={socialLinksVariants}
                       transition={{ duration: 0.5 }}
                     >
+                      {/* GitHub */}
                       <motion.a
                         href="https://github.com/your-profile"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:underline"
+                        className="flex items-center space-x-2 text-lg hover:text-yellow-400 transition-colors"
+                        variants={individualSocialVariant}
                         whileHover={hoverAnimation}
+                        aria-label="GitHub"
                       >
                         <FontAwesomeIcon icon={faGithub} className="text-2xl" />
+                        <span>GitHub</span>
                       </motion.a>
+
+                      {/* Instagram */}
                       <motion.a
                         href="https://www.instagram.com/veretenko_06/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:underline"
+                        className="flex items-center space-x-2 text-lg hover:text-yellow-400 transition-colors"
+                        variants={individualSocialVariant}
                         whileHover={hoverAnimation}
+                        aria-label="Instagram"
                       >
                         <FontAwesomeIcon icon={faInstagram} className="text-2xl" />
+                        <span>Instagram</span>
                       </motion.a>
+
+                      {/* LinkedIn */}
                       <motion.a
                         href="https://linkedin.com"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:underline"
+                        className="flex items-center space-x-2 text-lg hover:text-yellow-400 transition-colors"
+                        variants={individualSocialVariant}
                         whileHover={hoverAnimation}
+                        aria-label="LinkedIn"
                       >
                         <FontAwesomeIcon icon={faLinkedin} className="text-2xl" />
+                        <span>LinkedIn</span>
                       </motion.a>
                     </motion.div>
                   )}

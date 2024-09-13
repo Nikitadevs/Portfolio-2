@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -10,97 +10,194 @@ import {
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
 
-const Contact = ({ darkMode }) => {
-  const [formData, setFormData] = useState({
+// Environment Variable for Formspree Endpoint
+const FORMSPREE_ENDPOINT = process.env.NEXT_PUBLIC_FORMSPREE_ENDPOINT || 'https://formspree.io/f/xvgpavpe';
+
+// Initial state for the reducer
+const initialState = {
+  formData: {
     name: '',
     email: '',
     message: '',
-  });
-
-  const [isSent, setIsSent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState({
+  },
+  isSent: false,
+  isSubmitting: false,
+  error: {
     name: '',
     email: '',
     message: '',
     form: '',
-  });
+  },
+};
+
+// Reducer function to manage form state
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'FIELD_CHANGE':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          [action.field]: action.value,
+        },
+      };
+    case 'SET_ERRORS':
+      return {
+        ...state,
+        error: { ...state.error, ...action.errors },
+      };
+    case 'SUBMIT_START':
+      return { ...state, isSubmitting: true, error: { name: '', email: '', message: '', form: '' } };
+    case 'SUBMIT_SUCCESS':
+      return {
+        ...state,
+        isSubmitting: false,
+        isSent: true,
+        formData: { name: '', email: '', message: '' },
+      };
+    case 'SUBMIT_FAILURE':
+      return {
+        ...state,
+        isSubmitting: false,
+        error: { ...state.error, form: action.error },
+      };
+    default:
+      return state;
+  }
+};
+
+// Custom hook for managing contact form
+const useContactForm = () => {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    dispatch({ type: 'FIELD_CHANGE', field: name, value });
   };
 
-  const validateEmail = (email) => {
-    // Simple email validation regex
-    const re = /\S+@\S+\.\S+/;
-    return re.test(email);
-  };
+  const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError({ name: '', email: '', message: '', form: '' });
+    dispatch({ type: 'SUBMIT_START' });
+
+    const { name, email, message } = state.formData;
+    const errors = {};
 
     // Client-side validation
-    let hasError = false;
-    if (!formData.name) {
-      setError((prev) => ({ ...prev, name: 'Please enter your name.' }));
-      hasError = true;
+    if (!name.trim()) errors.name = 'Please enter your name.';
+    if (!email.trim()) {
+      errors.email = 'Please enter your email.';
+    } else if (!validateEmail(email)) {
+      errors.email = 'Please enter a valid email address.';
     }
-    if (!formData.email) {
-      setError((prev) => ({ ...prev, email: 'Please enter your email.' }));
-      hasError = true;
-    } else if (!validateEmail(formData.email)) {
-      setError((prev) => ({
-        ...prev,
-        email: 'Please enter a valid email address.',
-      }));
-      hasError = true;
-    }
-    if (!formData.message) {
-      setError((prev) => ({ ...prev, message: 'Please enter your message.' }));
-      hasError = true;
-    }
+    if (!message.trim()) errors.message = 'Please enter your message.';
 
-    if (hasError) {
-      setIsSubmitting(false);
+    if (Object.keys(errors).length > 0) {
+      dispatch({ type: 'SET_ERRORS', errors });
+      dispatch({ type: 'SUBMIT_FAILURE', error: 'Please fix the errors above.' });
       return;
     }
 
     try {
-      const response = await fetch('https://formspree.io/f/xvgpavpe', {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(state.formData),
       });
 
       if (response.ok) {
-        setIsSent(true);
-        setFormData({ name: '', email: '', message: '' });
+        dispatch({ type: 'SUBMIT_SUCCESS' });
       } else {
         const result = await response.json();
-        setError((prev) => ({
-          ...prev,
-          form:
-            result.error || 'Form submission error. Please try again later.',
-        }));
+        dispatch({
+          type: 'SUBMIT_FAILURE',
+          error: result.error || 'Form submission error. Please try again later.',
+        });
       }
     } catch (error) {
       console.error(error);
-      setError((prev) => ({
-        ...prev,
-        form: 'Network error. Please try again later.',
-      }));
-    } finally {
-      setIsSubmitting(false);
+      dispatch({
+        type: 'SUBMIT_FAILURE',
+        error: 'Network error. Please try again later.',
+      });
     }
   };
+
+  return { state, handleChange, handleSubmit };
+};
+
+// Sub-component for form fields
+const FormField = ({
+  id,
+  label,
+  icon,
+  type = 'text',
+  name,
+  value,
+  onChange,
+  placeholder,
+  error,
+  darkMode,
+}) => (
+  <div className="flex flex-col">
+    <label
+      htmlFor={id}
+      className="text-left text-sm font-semibold mb-2 flex items-center"
+    >
+      <FontAwesomeIcon icon={icon} className="mr-2 text-lg" />
+      {label}
+    </label>
+    {type !== 'textarea' ? (
+      <input
+        id={id}
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`shadow-sm border ${
+          error ? 'border-red-500' : 'border-gray-300'
+        } rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 ${
+          error ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+        } ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+        aria-required="true"
+        aria-invalid={error ? 'true' : 'false'}
+        aria-describedby={error ? `${id}-error` : undefined}
+      />
+    ) : (
+      <textarea
+        id={id}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows="6"
+        className={`shadow-sm border ${
+          error ? 'border-red-500' : 'border-gray-300'
+        } rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 ${
+          error ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+        } ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+        aria-required="true"
+        aria-invalid={error ? 'true' : 'false'}
+        aria-describedby={error ? `${id}-error` : undefined}
+      ></textarea>
+    )}
+    {error && (
+      <p id={`${id}-error`} className="text-red-500 text-sm mt-1 flex items-center">
+        <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
+        {error}
+      </p>
+    )}
+  </div>
+);
+
+// Main Contact Component
+const Contact = ({ darkMode }) => {
+  const { state, handleChange, handleSubmit } = useContactForm();
+  const { formData, isSent, isSubmitting, error } = state;
 
   return (
     <motion.section
@@ -129,144 +226,55 @@ const Contact = ({ darkMode }) => {
                 <p>Your message has been sent successfully!</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
-                <div className="flex flex-col">
-                  <label
-                    className="text-left text-sm font-semibold mb-2 flex items-center"
-                    htmlFor="name"
-                  >
-                    <FontAwesomeIcon icon={faUser} className="mr-2 text-lg" />
-                    Name
-                  </label>
-                  <input
-                    className={`shadow-sm border ${
-                      error.name ? 'border-red-500' : 'border-gray-300'
-                    } rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 ${
-                      error.name
-                        ? 'focus:ring-red-500'
-                        : 'focus:ring-blue-500'
-                    } ${
-                      darkMode
-                        ? 'bg-gray-700 text-white'
-                        : 'bg-white text-gray-800'
-                    }`}
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Your Name"
-                    aria-required="true"
-                    aria-invalid={error.name ? 'true' : 'false'}
-                    aria-describedby="name-error"
-                  />
-                  {error.name && (
-                    <p id="name-error" className="text-red-500 text-sm mt-1">
-                      <FontAwesomeIcon
-                        icon={faTimesCircle}
-                        className="mr-1"
-                      />
-                      {error.name}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <label
-                    className="text-left text-sm font-semibold mb-2 flex items-center"
-                    htmlFor="email"
-                  >
-                    <FontAwesomeIcon
-                      icon={faEnvelope}
-                      className="mr-2 text-lg"
-                    />
-                    Email
-                  </label>
-                  <input
-                    className={`shadow-sm border ${
-                      error.email ? 'border-red-500' : 'border-gray-300'
-                    } rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 ${
-                      error.email
-                        ? 'focus:ring-red-500'
-                        : 'focus:ring-blue-500'
-                    } ${
-                      darkMode
-                        ? 'bg-gray-700 text-white'
-                        : 'bg-white text-gray-800'
-                    }`}
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Your Email"
-                    aria-required="true"
-                    aria-invalid={error.email ? 'true' : 'false'}
-                    aria-describedby="email-error"
-                  />
-                  {error.email && (
-                    <p id="email-error" className="text-red-500 text-sm mt-1">
-                      <FontAwesomeIcon
-                        icon={faTimesCircle}
-                        className="mr-1"
-                      />
-                      {error.email}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <label
-                    className="text-left text-sm font-semibold mb-2 flex items-center"
-                    htmlFor="message"
-                  >
-                    <FontAwesomeIcon
-                      icon={faCommentDots}
-                      className="mr-2 text-lg"
-                    />
-                    Message
-                  </label>
-                  <textarea
-                    className={`shadow-sm border ${
-                      error.message ? 'border-red-500' : 'border-gray-300'
-                    } rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 ${
-                      error.message
-                        ? 'focus:ring-red-500'
-                        : 'focus:ring-blue-500'
-                    } ${
-                      darkMode
-                        ? 'bg-gray-700 text-white'
-                        : 'bg-white text-gray-800'
-                    }`}
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Your Message"
-                    rows="6"
-                    aria-required="true"
-                    aria-invalid={error.message ? 'true' : 'false'}
-                    aria-describedby="message-error"
-                  ></textarea>
-                  {error.message && (
-                    <p id="message-error" className="text-red-500 text-sm mt-1">
-                      <FontAwesomeIcon
-                        icon={faTimesCircle}
-                        className="mr-1"
-                      />
-                      {error.message}
-                    </p>
-                  )}
-                </div>
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-6" noValidate>
+                <FormField
+                  id="name"
+                  label="Name"
+                  icon={faUser}
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Your Name"
+                  error={error.name}
+                  darkMode={darkMode}
+                />
+                <FormField
+                  id="email"
+                  label="Email"
+                  icon={faEnvelope}
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Your Email"
+                  error={error.email}
+                  darkMode={darkMode}
+                />
+                <FormField
+                  id="message"
+                  label="Message"
+                  icon={faCommentDots}
+                  type="textarea"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Your Message"
+                  error={error.message}
+                  darkMode={darkMode}
+                />
                 {error.form && (
-                  <p className="text-red-500 text-sm mb-2">
+                  <p className="text-red-500 text-sm mb-2 flex items-center">
                     <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
                     {error.form}
                   </p>
                 )}
                 <div className="flex items-center justify-center">
                   <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 flex items-center"
                     type="submit"
                     disabled={isSubmitting}
+                    className={`bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 flex items-center ${
+                      isSubmitting ? 'cursor-not-allowed opacity-75' : ''
+                    }`}
                   >
                     {isSubmitting ? (
                       <span className="flex items-center">
@@ -275,6 +283,7 @@ const Contact = ({ darkMode }) => {
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <circle
                             className="opacity-25"
@@ -294,10 +303,7 @@ const Contact = ({ darkMode }) => {
                       </span>
                     ) : (
                       <>
-                        <FontAwesomeIcon
-                          icon={faPaperPlane}
-                          className="mr-2"
-                        />
+                        <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
                         Send Message
                       </>
                     )}
@@ -317,9 +323,12 @@ const Contact = ({ darkMode }) => {
               className="text-4xl text-blue-500 mb-4"
             />
             <p className="text-lg sm:text-xl mb-2">
-              nikita.development@gmail.com
+              <a href="mailto:nikita.development@gmail.com" className="hover:underline">
+                nikita.development@gmail.com
+              </a>
             </p>
             <button
+              type="button"
               className="bg-blue-500 text-white font-bold py-3 px-6 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
               onClick={() =>
                 (window.location.href = 'mailto:nikita.development@gmail.com')
