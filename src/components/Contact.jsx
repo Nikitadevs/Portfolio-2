@@ -1,6 +1,13 @@
-import { useState, memo, useCallback } from 'react';
+// Contact.jsx
+import React, {
+  useReducer,
+  memo,
+  useCallback,
+  useRef,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEnvelope,
@@ -10,6 +17,72 @@ import {
   faTimesCircle,
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
+
+// Initial State for useReducer
+const initialState = {
+  formData: {
+    name: '',
+    email: '',
+    message: '',
+    honeypot: '', // Hidden field for spam prevention
+  },
+  errors: {
+    name: '',
+    email: '',
+    message: '',
+    form: '',
+  },
+  isSubmitting: false,
+  isSent: false,
+};
+
+// Reducer Function
+function reducer(state, action) {
+  switch (action.type) {
+    case 'UPDATE_FIELD':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          [action.field]: action.value,
+        },
+      };
+    case 'SET_ERRORS':
+      return {
+        ...state,
+        errors: action.errors,
+      };
+    case 'SUBMIT_START':
+      return {
+        ...state,
+        isSubmitting: true,
+        errors: initialState.errors,
+      };
+    case 'SUBMIT_SUCCESS':
+      return {
+        ...state,
+        isSubmitting: false,
+        isSent: true,
+        formData: initialState.formData,
+      };
+    case 'SUBMIT_FAILURE':
+      return {
+        ...state,
+        isSubmitting: false,
+        errors: {
+          ...state.errors,
+          form: action.error,
+        },
+      };
+    case 'RESET_SENT':
+      return {
+        ...state,
+        isSent: false,
+      };
+    default:
+      return state;
+  }
+}
 
 // Reusable Input Field Component
 const InputField = memo(function InputField({
@@ -23,6 +96,7 @@ const InputField = memo(function InputField({
   placeholder,
   error,
   darkMode,
+  innerRef,
 }) {
   return (
     <div className="flex flex-col">
@@ -43,6 +117,7 @@ const InputField = memo(function InputField({
         aria-required="true"
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
+        ref={innerRef}
         className={`shadow-sm border ${
           error ? 'border-red-500' : 'border-gray-300'
         } rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 ${
@@ -51,14 +126,22 @@ const InputField = memo(function InputField({
           darkMode
             ? 'bg-gray-700 text-white placeholder-gray-400'
             : 'bg-white text-gray-800 placeholder-gray-500'
-        }`}
+        } transition-colors duration-200`}
       />
-      {error && (
-        <p id={`${id}-error`} className="text-red-500 text-sm mt-1 flex items-center">
-          <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
-          {error}
-        </p>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            id={`${id}-error`}
+            className="text-red-500 text-sm mt-1 flex items-center"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+          >
+            <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
@@ -74,6 +157,10 @@ InputField.propTypes = {
   placeholder: PropTypes.string,
   error: PropTypes.string,
   darkMode: PropTypes.bool,
+  innerRef: PropTypes.oneOfType([
+    PropTypes.func, 
+    PropTypes.shape({ current: PropTypes.any })
+  ]),
 };
 
 // Reusable TextArea Field Component
@@ -115,14 +202,22 @@ const TextAreaField = memo(function TextAreaField({
           darkMode
             ? 'bg-gray-700 text-white placeholder-gray-400'
             : 'bg-white text-gray-800 placeholder-gray-500'
-        }`}
+        } transition-colors duration-200`}
       ></textarea>
-      {error && (
-        <p id={`${id}-error`} className="text-red-500 text-sm mt-1 flex items-center">
-          <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
-          {error}
-        </p>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            id={`${id}-error`}
+            className="text-red-500 text-sm mt-1 flex items-center"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+          >
+            <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
@@ -139,110 +234,146 @@ TextAreaField.propTypes = {
   darkMode: PropTypes.bool,
 };
 
+// Email Validation Function
+const validateEmail = (email) => {
+  // Improved email validation regex
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
+// Main Contact Component
 const Contact = ({ darkMode = false }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: '',
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { formData, errors, isSubmitting, isSent } = state;
 
-  const [isSent, setIsSent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState({
-    name: '',
-    email: '',
-    message: '',
-    form: '',
-  });
+  // Refs for focus management
+  const nameRef = useRef(null);
+  const emailRef = useRef(null);
+  const messageRef = useRef(null);
+  const formRef = useRef(null);
+  const successRef = useRef(null);
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+  // Focus on the first input field when the component mounts
+  useEffect(() => {
+    if (nameRef.current) {
+      nameRef.current.focus();
+    }
   }, []);
 
-  const validateEmail = (email) => {
-    // Improved email validation regex
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  // Handler for input changes
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    dispatch({ type: 'UPDATE_FIELD', field: name, value });
+  }, []);
 
-  const validateForm = () => {
-    const newError = { name: '', email: '', message: '', form: '' };
+  // Form Validation
+  const validateForm = useCallback(() => {
+    const { name, email, message } = formData;
+    const newErrors = { name: '', email: '', message: '', form: '' };
     let isValid = true;
 
-    if (!formData.name.trim()) {
-      newError.name = 'Please enter your name.';
+    if (!name.trim()) {
+      newErrors.name = 'Please enter your name.';
       isValid = false;
     }
 
-    if (!formData.email.trim()) {
-      newError.email = 'Please enter your email.';
+    if (!email.trim()) {
+      newErrors.email = 'Please enter your email.';
       isValid = false;
-    } else if (!validateEmail(formData.email)) {
-      newError.email = 'Please enter a valid email address.';
-      isValid = false;
-    }
-
-    if (!formData.message.trim()) {
-      newError.message = 'Please enter your message.';
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Please enter a valid email address.';
       isValid = false;
     }
 
-    setError(newError);
+    if (!message.trim()) {
+      newErrors.message = 'Please enter your message.';
+      isValid = false;
+    }
+
+    // Honeypot field check (should be empty)
+    if (formData.honeypot) {
+      isValid = false;
+      newErrors.form = 'Spam detected.';
+    }
+
+    dispatch({ type: 'SET_ERRORS', errors: newErrors });
     return isValid;
-  };
+  }, [formData]);
 
+  // Form Submission Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
 
-    setIsSubmitting(true);
-    setError({ name: '', email: '', message: '', form: '' });
+    dispatch({ type: 'SUBMIT_START' });
 
     if (!validateForm()) {
-      setIsSubmitting(false);
+      // Focus on the first error field
+      if (errors.name) {
+        nameRef.current?.focus();
+      } else if (errors.email) {
+        emailRef.current?.focus();
+      } else if (errors.message) {
+        messageRef.current?.focus();
+      }
+      dispatch({
+        type: 'SUBMIT_FAILURE',
+        error: 'Please fix the errors above.',
+      });
       return;
     }
 
     try {
-      const response = await fetch('https://formspree.io/f/xvgpavpe', {
+      const backendURL =
+        process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+      const response = await fetch(`${backendURL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        setIsSent(true);
-        setFormData({ name: '', email: '', message: '' });
+        dispatch({ type: 'SUBMIT_SUCCESS' });
+        // Focus on the success message
+        successRef.current?.focus();
       } else {
-        const result = await response.json();
-        setError((prev) => ({
-          ...prev,
-          form: result.error || 'Form submission error. Please try again later.',
-        }));
+        dispatch({
+          type: 'SUBMIT_FAILURE',
+          error: result.error || 'Form submission error. Please try again later.',
+        });
       }
     } catch (networkError) {
       console.error(networkError);
-      setError((prev) => ({
-        ...prev,
-        form: 'Network error. Please try again later.',
-      }));
-    } finally {
-      setIsSubmitting(false);
+      dispatch({
+        type: 'SUBMIT_FAILURE',
+        error: 'Network error. Please try again later.',
+      });
     }
   };
+
+  // Handler to reset the sent state
+  const handleReset = useCallback(() => {
+    dispatch({ type: 'RESET_SENT' });
+    if (formRef.current) {
+      formRef.current.focus();
+    }
+  }, []);
 
   return (
     <motion.section
       id="contact"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
       className={`p-6 sm:p-8 ${
         darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
       }`}
@@ -263,102 +394,147 @@ const Contact = ({ darkMode = false }) => {
             }`}
             whileHover={{ scale: 1.02 }}
           >
-            {isSent ? (
-              <div className="flex flex-col items-center text-green-500 text-lg font-semibold">
-                <FontAwesomeIcon
-                  icon={faCheckCircle}
-                  className="text-4xl mb-4"
-                  aria-hidden="true"
-                />
-                <p>Your message has been sent successfully!</p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col space-y-6" noValidate>
-                <InputField
-                  label="Name"
-                  icon={faUser}
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Your Name"
-                  error={error.name}
-                  darkMode={darkMode}
-                />
-                <InputField
-                  label="Email"
-                  icon={faEnvelope}
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Your Email"
-                  error={error.email}
-                  darkMode={darkMode}
-                />
-                <TextAreaField
-                  label="Message"
-                  icon={faCommentDots}
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  placeholder="Your Message"
-                  error={error.message}
-                  darkMode={darkMode}
-                />
-                {error.form && (
-                  <p className="text-red-500 text-sm mb-2 flex items-center justify-center">
-                    <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
-                    {error.form}
-                  </p>
-                )}
-                <div className="flex items-center justify-center">
+            <AnimatePresence>
+              {isSent ? (
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="flex flex-col items-center text-green-500 text-lg font-semibold"
+                  aria-live="polite"
+                  tabIndex="-1"
+                  ref={successRef}
+                >
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-4xl mb-4"
+                    aria-hidden="true"
+                  />
+                  <p>Thank you, {formData.name || 'Guest'}!</p>
+                  <p>Your message has been sent successfully. I'll get back to you soon.</p>
                   <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 flex items-center ${
-                      isSubmitting ? 'cursor-not-allowed opacity-75' : ''
-                    }`}
-                    aria-disabled={isSubmitting}
+                    onClick={handleReset}
+                    className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
                   >
-                    {isSubmitting ? (
-                      <span className="flex items-center">
-                        <svg
-                          className="animate-spin h-5 w-5 mr-3 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V4a10 10 0 00-10 10h2z"
-                          ></path>
-                        </svg>
-                        Sending...
-                      </span>
-                    ) : (
-                      <>
-                        <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
-                        Send Message
-                      </>
-                    )}
+                    Send Another Message
                   </button>
-                </div>
-              </form>
-            )}
+                </motion.div>
+              ) : (
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col space-y-6"
+                  noValidate
+                  ref={formRef}
+                >
+                  {/* Honeypot Field (Hidden) */}
+                  <input
+                    type="text"
+                    name="honeypot"
+                    value={formData.honeypot}
+                    onChange={handleChange}
+                    className="hidden"
+                    tabIndex="-1"
+                    autoComplete="off"
+                  />
+
+                  <InputField
+                    label="Name"
+                    icon={faUser}
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Your Name"
+                    error={errors.name}
+                    darkMode={darkMode}
+                    innerRef={nameRef}
+                  />
+                  <InputField
+                    label="Email"
+                    icon={faEnvelope}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Your Email"
+                    error={errors.email}
+                    darkMode={darkMode}
+                    innerRef={emailRef}
+                  />
+                  <TextAreaField
+                    label="Message"
+                    icon={faCommentDots}
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Your Message"
+                    error={errors.message}
+                    darkMode={darkMode}
+                  />
+
+                  <AnimatePresence>
+                    {errors.form && (
+                      <motion.p
+                        className="text-red-500 text-sm mb-2 flex items-center justify-center"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                      >
+                        <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
+                        {errors.form}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="flex items-center justify-center">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 flex items-center ${
+                        isSubmitting ? 'cursor-not-allowed opacity-75' : ''
+                      }`}
+                      aria-disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center">
+                          <svg
+                            className="animate-spin h-5 w-5 mr-3 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V4a10 10 0 00-10 10h2z"
+                            ></path>
+                          </svg>
+                          Sending...
+                        </span>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
+                          Send Message
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           {/* Contact Information */}
@@ -378,7 +554,7 @@ const Contact = ({ darkMode = false }) => {
               type="button"
               className="bg-blue-500 text-white font-bold py-3 px-6 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
               onClick={() =>
-                (window.location.href = 'mailto:nikita.development@gmail.com')
+                window.open('mailto:nikita.development@gmail.com', '_blank')
               }
             >
               Email Me
