@@ -1,9 +1,8 @@
-// ProjectModal.jsx
-import { useEffect, useRef, memo } from 'react';
+import { useEffect, useRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes,faCode } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faCode } from '@fortawesome/free-solid-svg-icons';
 import useFocusTrap from './useFocusTrap';
 import ImageCarousel from './ImageCarousel';
 
@@ -13,28 +12,55 @@ const backdropVariants = {
 };
 
 const modalVariants = {
-  hidden: { y: "-100vh", opacity: 0, scale: 0.8 },
-  visible: { y: "0", opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 25 } },
-  exit: { y: "100vh", opacity: 0, scale: 0.8, transition: { type: 'spring', stiffness: 300, damping: 25 } },
+  hidden: { y: '-100vh', opacity: 0, scale: 0.8 },
+  visible: {
+    y: '0',
+    opacity: 1,
+    scale: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 25 },
+  },
+  exit: {
+    y: '100vh',
+    opacity: 0,
+    scale: 0.8,
+    transition: { type: 'spring', stiffness: 300, damping: 25 },
+  },
 };
 
-const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
+const ProjectModal = ({ isOpen, onClose, project, darkMode = false }) => {
   const modalRef = useRef(null);
-  const triggerRef = useRef(document.activeElement);
+  const triggerRef = useRef(null);
 
   useFocusTrap(modalRef, isOpen);
 
   useEffect(() => {
     if (isOpen) {
+      // Store the element that was focused before opening the modal
+      triggerRef.current = document.activeElement;
+
       const onEscKeyDown = (e) => {
         if (e.key === 'Escape') onClose();
       };
+
       document.addEventListener('keydown', onEscKeyDown);
-      return () => document.removeEventListener('keydown', onEscKeyDown);
+
+      return () => {
+        document.removeEventListener('keydown', onEscKeyDown);
+      };
     } else if (triggerRef.current) {
+      // Return focus to the element that was focused before the modal opened
       triggerRef.current.focus();
     }
   }, [isOpen, onClose]);
+
+  const handleBackdropClick = useCallback(
+    (e) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   return (
     <AnimatePresence>
@@ -48,6 +74,7 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
           aria-modal="true"
           role="dialog"
           aria-labelledby="modal-title"
+          onClick={handleBackdropClick}
         >
           <motion.div
             ref={modalRef}
@@ -59,6 +86,7 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
             animate="visible"
             exit="exit"
             role="document"
+            aria-describedby="modal-description"
           >
             {/* Close Button */}
             <button
@@ -97,7 +125,10 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
               ) : null}
 
               {/* Description */}
-              <p className="text-base sm:text-lg mb-6 leading-relaxed text-justify">
+              <p
+                id="modal-description"
+                className="text-base sm:text-lg mb-6 leading-relaxed text-justify"
+              >
                 {project.description}
               </p>
 
@@ -130,9 +161,7 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`flex items-center justify-center w-full sm:w-auto bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 hover:bg-green-700 focus:outline-none focus:ring-4 ${
-                      darkMode
-                        ? 'focus:ring-green-300'
-                        : 'focus:ring-green-500'
+                      darkMode ? 'focus:ring-green-300' : 'focus:ring-green-500'
                     }`}
                     aria-label={`View ${project.title} code`}
                   >
@@ -143,9 +172,7 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode }) => {
                 <button
                   onClick={onClose}
                   className={`flex items-center justify-center w-full sm:w-auto bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 hover:bg-gray-700 focus:outline-none focus:ring-4 ${
-                    darkMode
-                      ? 'focus:ring-gray-300'
-                      : 'focus:ring-gray-500'
+                    darkMode ? 'focus:ring-gray-300' : 'focus:ring-gray-500'
                   }`}
                   aria-label="Close modal"
                 >
@@ -164,16 +191,15 @@ ProjectModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   project: PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.string,
     title: PropTypes.string.isRequired,
     image: PropTypes.string,
     images: PropTypes.arrayOf(PropTypes.string),
     description: PropTypes.string.isRequired,
     technologies: PropTypes.arrayOf(PropTypes.string),
-    // Removed 'link' since it's no longer used
     codeLink: PropTypes.string,
   }).isRequired,
-  darkMode: PropTypes.bool.isRequired,
+  darkMode: PropTypes.bool,
 };
 
 export default memo(ProjectModal);

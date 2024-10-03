@@ -1,5 +1,5 @@
-/* eslint-disable react/prop-types */
-import { useState, memo } from 'react';
+import { useState, memo, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -12,20 +12,19 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 // Reusable Input Field Component
-// eslint-disable-next-line react/display-name
-const InputField = memo(
-  ({
-    label,
-    icon,
-    id,
-    name,
-    type = 'text',
-    value,
-    onChange,
-    placeholder,
-    error,
-    darkMode,
-  }) => (
+const InputField = memo(function InputField({
+  label,
+  icon,
+  id,
+  name,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  error,
+  darkMode,
+}) {
+  return (
     <div className="flex flex-col">
       <label
         htmlFor={id}
@@ -42,7 +41,7 @@ const InputField = memo(
         onChange={onChange}
         placeholder={placeholder}
         aria-required="true"
-        aria-invalid={error ? 'true' : 'false'}
+        aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
         className={`shadow-sm border ${
           error ? 'border-red-500' : 'border-gray-300'
@@ -61,25 +60,35 @@ const InputField = memo(
         </p>
       )}
     </div>
-  )
-);
+  );
+});
+
+InputField.propTypes = {
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.object.isRequired,
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  type: PropTypes.string,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  error: PropTypes.string,
+  darkMode: PropTypes.bool,
+};
 
 // Reusable TextArea Field Component
-// eslint-disable-next-line react/display-name
-const TextAreaField = memo(
-  ({
-    label,
-    icon,
-    id,
-    name,
-    value,
-    onChange,
-    placeholder,
-    // eslint-disable-next-line react/prop-types
-    error,
-    // eslint-disable-next-line react/prop-types
-    darkMode,
-  }) => (
+const TextAreaField = memo(function TextAreaField({
+  label,
+  icon,
+  id,
+  name,
+  value,
+  onChange,
+  placeholder,
+  error,
+  darkMode,
+}) {
+  return (
     <div className="flex flex-col">
       <label
         htmlFor={id}
@@ -96,7 +105,7 @@ const TextAreaField = memo(
         placeholder={placeholder}
         rows="6"
         aria-required="true"
-        aria-invalid={error ? 'true' : 'false'}
+        aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
         className={`shadow-sm border ${
           error ? 'border-red-500' : 'border-gray-300'
@@ -115,10 +124,22 @@ const TextAreaField = memo(
         </p>
       )}
     </div>
-  )
-);
+  );
+});
 
-const Contact = ({ darkMode }) => {
+TextAreaField.propTypes = {
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.object.isRequired,
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  error: PropTypes.string,
+  darkMode: PropTypes.bool,
+};
+
+const Contact = ({ darkMode = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -134,49 +155,54 @@ const Contact = ({ darkMode }) => {
     form: '',
   });
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
-  };
+  }, []);
 
   const validateEmail = (email) => {
-    // Simple email validation regex
-    const re = /\S+@\S+\.\S+/;
+    // Improved email validation regex
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError({ name: '', email: '', message: '', form: '' });
-
-    // Client-side validation
-    let hasError = false;
+  const validateForm = () => {
     const newError = { name: '', email: '', message: '', form: '' };
+    let isValid = true;
 
     if (!formData.name.trim()) {
       newError.name = 'Please enter your name.';
-      hasError = true;
+      isValid = false;
     }
 
     if (!formData.email.trim()) {
       newError.email = 'Please enter your email.';
-      hasError = true;
+      isValid = false;
     } else if (!validateEmail(formData.email)) {
       newError.email = 'Please enter a valid email address.';
-      hasError = true;
+      isValid = false;
     }
 
     if (!formData.message.trim()) {
       newError.message = 'Please enter your message.';
-      hasError = true;
+      isValid = false;
     }
 
-    if (hasError) {
-      setError(newError);
+    setError(newError);
+    return isValid;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError({ name: '', email: '', message: '', form: '' });
+
+    if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
@@ -362,6 +388,10 @@ const Contact = ({ darkMode }) => {
       </div>
     </motion.section>
   );
+};
+
+Contact.propTypes = {
+  darkMode: PropTypes.bool,
 };
 
 export default Contact;

@@ -1,12 +1,12 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import { motion, useAnimation } from 'framer-motion';
 import { IoIosArrowDown } from 'react-icons/io';
 import Particles from 'react-tsparticles';
 import { loadFull } from 'tsparticles';
 import { useInView } from 'react-intersection-observer';
 import Typewriter from 'typewriter-effect';
-import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; // Ensure this import is present
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const SocialLink = ({ href, icon, label }) => (
   <motion.a
@@ -37,24 +37,49 @@ SocialLink.propTypes = {
   label: PropTypes.string.isRequired,
 };
 
-const Hero = ({ darkMode }) => {
+const Hero = ({ darkMode = false }) => {
+  const controls = useAnimation();
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.3,
   });
 
-  const particlesInit = async (main) => {
-    await loadFull(main);
-  };
+  const [particleCount, setParticleCount] = useState(getParticleCount());
 
-  const scrollToAbout = () => {
+  const particlesInit = useCallback(async (main) => {
+    await loadFull(main);
+  }, []);
+
+  const scrollToAbout = useCallback(() => {
     const aboutSection = document.getElementById('about');
     if (aboutSection) {
       aboutSection.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, []);
 
-  const sentence = 'Welcome to My Portfolio';
+  useEffect(() => {
+    if (inView) {
+      controls.start('visible');
+    }
+  }, [controls, inView]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setParticleCount(getParticleCount());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  function getParticleCount() {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) return 20;
+      if (window.innerWidth < 768) return 30;
+      return 50;
+    }
+    return 50; // Default particle count
+  }
 
   // Animation Variants
   const letterVariants = {
@@ -71,25 +96,7 @@ const Hero = ({ darkMode }) => {
     visible: { opacity: 1, transition: { delay: 1.5, duration: 1 } },
   };
 
-  // State to handle particle count based on screen width
-  const [particleCount, setParticleCount] = useState(
-    window.innerWidth < 640 ? 20 : window.innerWidth < 768 ? 30 : 50
-  );
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setParticleCount(20);
-      } else if (window.innerWidth < 768) {
-        setParticleCount(30);
-      } else {
-        setParticleCount(50);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const sentence = 'Welcome to My Portfolio';
 
   return (
     <section
@@ -106,8 +113,6 @@ const Hero = ({ darkMode }) => {
         style={{
           backgroundImage: 'url("/path-to-your-image.jpg")', // Update with your image path
           zIndex: -2,
-          backgroundPosition: 'center',
-          backgroundSize: 'cover',
         }}
         aria-hidden="true"
       ></div>
@@ -120,7 +125,10 @@ const Hero = ({ darkMode }) => {
           options={{
             fullScreen: { enable: false },
             particles: {
-              number: { value: particleCount, density: { enable: true, area: 800 } },
+              number: {
+                value: particleCount,
+                density: { enable: true, area: 800 },
+              },
               color: { value: darkMode ? '#ffffff' : '#000000' },
               shape: { type: 'circle' },
               opacity: { value: 0.3 },
@@ -163,7 +171,7 @@ const Hero = ({ darkMode }) => {
           darkMode ? 'text-white' : 'text-gray-900'
         }`}
         initial="hidden"
-        animate={inView ? 'visible' : 'hidden'}
+        animate={controls}
         variants={{
           visible: {
             transition: {
@@ -189,7 +197,7 @@ const Hero = ({ darkMode }) => {
       <motion.p
         className="text-sm sm:text-base md:text-lg lg:text-xl text-center max-w-2xl px-4 sm:px-0 mb-8 sm:mb-12"
         initial="hidden"
-        animate={inView ? 'visible' : 'hidden'}
+        animate={controls}
         variants={paragraphVariants}
       >
         <Typewriter
@@ -209,11 +217,9 @@ const Hero = ({ darkMode }) => {
 
       {/* Social Links (Visible on Mobile) */}
       <div className="flex flex-row mb-8 sm:mb-12">
-        {/* Add your social links here using the SocialLink component */}
-        {/* Example:
-        <SocialLink href="https://github.com/username" icon={faGithub} label="GitHub" />
-        <SocialLink href="https://linkedin.com/in/username" icon={faLinkedin} label="LinkedIn" />
-        */}
+        {/* Example Social Links */}
+        {/* <SocialLink href="https://github.com/username" icon={faGithub} label="GitHub" />
+        <SocialLink href="https://linkedin.com/in/username" icon={faLinkedin} label="LinkedIn" /> */}
       </div>
 
       {/* Scroll Down Arrow */}
@@ -246,7 +252,7 @@ const Hero = ({ darkMode }) => {
 };
 
 Hero.propTypes = {
-  darkMode: PropTypes.bool.isRequired,
+  darkMode: PropTypes.bool,
 };
 
 export default Hero;

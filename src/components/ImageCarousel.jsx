@@ -1,23 +1,50 @@
 // ImageCarousel.jsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
+const variants = {
+  enter: (direction) => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction) => ({
+    x: direction < 0 ? 300 : -300,
+    opacity: 0,
+  }),
+};
+
+const transition = {
+  x: { type: 'spring', stiffness: 300, damping: 30 },
+  opacity: { duration: 0.2 },
+};
+
 const ImageCarousel = ({ images }) => {
   const [[current, direction], setCurrent] = useState([0, 0]);
   const imageCount = images.length;
+  const carouselRef = useRef(null);
 
-  const paginate = (newDirection) => {
-    setCurrent([
-      (current + newDirection + imageCount) % imageCount,
-      newDirection,
-    ]);
-  };
+  const paginate = useCallback(
+    (newDirection) => {
+      setCurrent(([prevCurrent]) => [
+        (prevCurrent + newDirection + imageCount) % imageCount,
+        newDirection,
+      ]);
+    },
+    [imageCount]
+  );
 
   // Keyboard navigation
   useEffect(() => {
+    const node = carouselRef.current;
+    if (!node) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowLeft') {
         paginate(-1);
@@ -25,12 +52,21 @@ const ImageCarousel = ({ images }) => {
         paginate(1);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [current, imageCount]);
+
+    node.addEventListener('keydown', handleKeyDown);
+    return () => {
+      node.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [paginate]);
 
   return (
-    <div className="relative">
+    <div
+      ref={carouselRef}
+      className="relative"
+      tabIndex="0"
+      role="region"
+      aria-label="Image Carousel"
+    >
       <AnimatePresence initial={false} custom={direction}>
         <motion.img
           key={current}
@@ -39,27 +75,11 @@ const ImageCarousel = ({ images }) => {
           className="w-full h-60 sm:h-80 object-cover rounded-lg shadow-md"
           loading="lazy"
           custom={direction}
-          variants={{
-            enter: (direction) => ({
-              x: direction > 0 ? 300 : -300,
-              opacity: 0,
-            }),
-            center: {
-              x: 0,
-              opacity: 1,
-            },
-            exit: (direction) => ({
-              x: direction < 0 ? 300 : -300,
-              opacity: 0,
-            }),
-          }}
+          variants={variants}
           initial="enter"
           animate="center"
           exit="exit"
-          transition={{
-            x: { type: 'spring', stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 },
-          }}
+          transition={transition}
         />
       </AnimatePresence>
       {/* Navigation Buttons */}
