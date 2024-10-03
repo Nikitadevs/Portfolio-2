@@ -255,13 +255,6 @@ const Contact = ({ darkMode = false }) => {
   const formRef = useRef(null);
   const successRef = useRef(null);
 
-  // Focus on the first input field when the component mounts
-  useEffect(() => {
-    if (nameRef.current) {
-      nameRef.current.focus();
-    }
-  }, []);
-
   // Handler for input changes
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
