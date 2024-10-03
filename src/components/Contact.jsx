@@ -136,6 +136,7 @@ const InputField = memo(function InputField({
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
           >
             <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
             {error}
@@ -158,8 +159,8 @@ InputField.propTypes = {
   error: PropTypes.string,
   darkMode: PropTypes.bool,
   innerRef: PropTypes.oneOfType([
-    PropTypes.func, 
-    PropTypes.shape({ current: PropTypes.any })
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.any }),
   ]),
 };
 
@@ -212,6 +213,7 @@ const TextAreaField = memo(function TextAreaField({
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
           >
             <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
             {error}
@@ -325,26 +327,20 @@ const Contact = ({ darkMode = false }) => {
 
     try {
       const backendURL =
-        process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+        process.env.REACT_APP_BACKEND_URL || 'https://nikitadev.netlify.app/';
 
       const response = await fetch(`${backendURL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          message: formData.message,
-        }),
+        body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (response.ok) {
         dispatch({ type: 'SUBMIT_SUCCESS' });
-        // Focus on the success message
-        successRef.current?.focus();
       } else {
         dispatch({
           type: 'SUBMIT_FAILURE',
@@ -475,21 +471,12 @@ const Contact = ({ darkMode = false }) => {
                     error={errors.message}
                     darkMode={darkMode}
                   />
-
-                  <AnimatePresence>
-                    {errors.form && (
-                      <motion.p
-                        className="text-red-500 text-sm mb-2 flex items-center justify-center"
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                      >
-                        <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
-                        {errors.form}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-
+                  {errors.form && (
+                    <p className="text-red-500 text-sm mb-2 flex items-center justify-center">
+                      <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
+                      {errors.form}
+                    </p>
+                  )}
                   <div className="flex items-center justify-center">
                     <button
                       type="submit"

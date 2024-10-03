@@ -17,7 +17,7 @@ app.use(helmet()); // Secure HTTP headers
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000']; // Default origin
+  : ['https://nikitadev.netlify.app/']; // Default origin
 
 app.use(cors({
   origin: function (origin, callback) {
