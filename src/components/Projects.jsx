@@ -3,7 +3,7 @@ import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import ProjectModal from './ProjectModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLinkAlt, faCode } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 
 // Define projects with unique IDs
@@ -14,7 +14,6 @@ const projects = [
     description:
       'Automated the build, test, and deployment process for a microservices architecture using Jenkins and Docker. Set up a CI/CD pipeline to deploy updates seamlessly.',
     image: 'https://via.placeholder.com/400x200',
-    // Removed 'link' since "View Live" is no longer needed
     codeLink: 'https://github.com/example/cicd-project',
     technologies: ['Jenkins', 'Docker', 'Kubernetes', 'Git', 'Terraform'],
   },
@@ -39,13 +38,12 @@ const projects = [
 ];
 
 // Memoized ProjectCard to prevent unnecessary re-renders
-// eslint-disable-next-line react/display-name
 const ProjectCard = memo(({ project, darkMode, onClick }) => {
-  const { title, description, image } = project;
+  const { title, description, image, technologies, codeLink } = project;
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.02, y: -5 }}
       className={`flex flex-col h-full rounded-lg overflow-hidden transition-transform hover:shadow-2xl relative ${
         darkMode ? 'bg-gray-800' : 'bg-white'
       } shadow-lg`}
@@ -66,17 +64,32 @@ const ProjectCard = memo(({ project, darkMode, onClick }) => {
           srcSet={`${image} 400w, ${image} 800w`}
           sizes="(max-width: 640px) 100vw, 400px"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
         <div className="absolute bottom-0 left-0 p-4">
           <h3 className="text-lg sm:text-xl font-semibold text-white">{title}</h3>
         </div>
       </div>
       <div className="p-4 sm:p-6 flex-1 flex flex-col">
         <p className="text-sm sm:text-base mb-4 flex-1">{description}</p>
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 space-y-3 sm:space-y-0">
+        {/* Technology Badges */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {technologies.map((tech) => (
+            <span
+              key={tech}
+              className={`text-xs sm:text-sm font-medium px-2 py-1 rounded-full ${
+                darkMode
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-blue-100 text-blue-800'
+              }`}
+            >
+              {tech}
+            </span>
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-auto space-y-3 sm:space-y-0">
           {/* Prevent card onClick when button is clicked */}
           <button
-            className={`w-full sm:w-auto px-4 py-2 text-sm sm:text-base font-semibold rounded-full shadow-md transition-all duration-300 ${
+            className={`w-full sm:w-auto flex items-center justify-center px-4 py-2 text-sm sm:text-base font-semibold rounded-full shadow-md transition-all duration-300 ${
               darkMode
                 ? 'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300'
                 : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-200'
@@ -87,12 +100,12 @@ const ProjectCard = memo(({ project, darkMode, onClick }) => {
             }}
             aria-label={`View details of ${title}`}
           >
+            <FontAwesomeIcon icon={faCode} className="mr-2" />
             View Project
           </button>
-          {/* Removed the "Live Demo" link since it's no longer needed */}
-          {project.codeLink && (
+          {codeLink && (
             <a
-              href={project.codeLink}
+              href={codeLink}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center w-full sm:w-auto text-center text-green-500 hover:text-green-600 transition duration-300 focus:outline-none"
@@ -115,7 +128,6 @@ ProjectCard.propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     image: PropTypes.string.isRequired,
-    // Removed 'link' since "View Live" is no longer used
     codeLink: PropTypes.string,
     technologies: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,

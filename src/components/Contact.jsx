@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useRef,
   useEffect,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +19,16 @@ import {
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
 
+// Action Types
+const ACTION_TYPES = {
+  UPDATE_FIELD: 'UPDATE_FIELD',
+  SET_ERRORS: 'SET_ERRORS',
+  SUBMIT_START: 'SUBMIT_START',
+  SUBMIT_SUCCESS: 'SUBMIT_SUCCESS',
+  SUBMIT_FAILURE: 'SUBMIT_FAILURE',
+  RESET_SENT: 'RESET_SENT',
+};
+
 // Initial State for useReducer
 const initialState = {
   formData: {
@@ -26,6 +37,7 @@ const initialState = {
     message: '',
     honeypot: '', // Hidden field for spam prevention
   },
+  sentData: null, // To store data for success message
   errors: {
     name: '',
     email: '',
@@ -39,7 +51,7 @@ const initialState = {
 // Reducer Function
 function reducer(state, action) {
   switch (action.type) {
-    case 'UPDATE_FIELD':
+    case ACTION_TYPES.UPDATE_FIELD:
       return {
         ...state,
         formData: {
@@ -47,25 +59,26 @@ function reducer(state, action) {
           [action.field]: action.value,
         },
       };
-    case 'SET_ERRORS':
+    case ACTION_TYPES.SET_ERRORS:
       return {
         ...state,
         errors: action.errors,
       };
-    case 'SUBMIT_START':
+    case ACTION_TYPES.SUBMIT_START:
       return {
         ...state,
         isSubmitting: true,
         errors: initialState.errors,
       };
-    case 'SUBMIT_SUCCESS':
+    case ACTION_TYPES.SUBMIT_SUCCESS:
       return {
         ...state,
         isSubmitting: false,
         isSent: true,
+        sentData: { name: state.formData.name },
         formData: initialState.formData,
       };
-    case 'SUBMIT_FAILURE':
+    case ACTION_TYPES.SUBMIT_FAILURE:
       return {
         ...state,
         isSubmitting: false,
@@ -74,10 +87,11 @@ function reducer(state, action) {
           form: action.error,
         },
       };
-    case 'RESET_SENT':
+    case ACTION_TYPES.RESET_SENT:
       return {
         ...state,
         isSent: false,
+        sentData: null,
       };
     default:
       return state;
@@ -243,27 +257,18 @@ const validateEmail = (email) => {
   return re.test(email);
 };
 
-// Main Contact Component
-const Contact = ({ darkMode = false }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const { formData, errors, isSubmitting, isSent } = state;
+// Custom Hook for Form Handling
+const useContactForm = (dispatch, formData) => {
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      dispatch({ type: ACTION_TYPES.UPDATE_FIELD, field: name, value });
+    },
+    [dispatch]
+  );
 
-  // Refs for focus management
-  const nameRef = useRef(null);
-  const emailRef = useRef(null);
-  const messageRef = useRef(null);
-  const formRef = useRef(null);
-  const successRef = useRef(null);
-
-  // Handler for input changes
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    dispatch({ type: 'UPDATE_FIELD', field: name, value });
-  }, []);
-
-  // Form Validation
   const validateForm = useCallback(() => {
-    const { name, email, message } = formData;
+    const { name, email, message, honeypot } = formData;
     const newErrors = { name: '', email: '', message: '', form: '' };
     let isValid = true;
 
@@ -283,36 +288,61 @@ const Contact = ({ darkMode = false }) => {
     if (!message.trim()) {
       newErrors.message = 'Please enter your message.';
       isValid = false;
+    } else if (message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters long.';
+      isValid = false;
     }
 
     // Honeypot field check (should be empty)
-    if (formData.honeypot) {
+    if (honeypot) {
       isValid = false;
       newErrors.form = 'Spam detected.';
     }
 
-    dispatch({ type: 'SET_ERRORS', errors: newErrors });
-    return isValid;
+    return { isValid, newErrors };
   }, [formData]);
+
+  return { handleChange, validateForm };
+};
+
+// Main Contact Component
+const Contact = ({ darkMode = false }) => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { formData, sentData, errors, isSubmitting, isSent } = state;
+
+  // Refs for focus management
+  const nameRef = useRef(null);
+  const emailRef = useRef(null);
+  const messageRef = useRef(null);
+  const formRef = useRef(null);
+  const successRef = useRef(null);
+
+  // Utilize the custom hook
+  const { handleChange, validateForm } = useContactForm(dispatch, formData);
 
   // Form Submission Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
 
-    dispatch({ type: 'SUBMIT_START' });
+    dispatch({ type: ACTION_TYPES.SUBMIT_START });
 
-    if (!validateForm()) {
+    const { isValid, newErrors } = validateForm();
+
+    if (!isValid) {
+      dispatch({ type: ACTION_TYPES.SET_ERRORS, errors: newErrors });
+
       // Focus on the first error field
-      if (errors.name) {
+      if (newErrors.name) {
         nameRef.current?.focus();
-      } else if (errors.email) {
+      } else if (newErrors.email) {
         emailRef.current?.focus();
-      } else if (errors.message) {
+      } else if (newErrors.message) {
         messageRef.current?.focus();
       }
+
       dispatch({
-        type: 'SUBMIT_FAILURE',
+        type: ACTION_TYPES.SUBMIT_FAILURE,
         error: 'Please fix the errors above.',
       });
       return;
@@ -320,30 +350,34 @@ const Contact = ({ darkMode = false }) => {
 
     try {
       const backendURL =
-        process.env.REACT_APP_BACKEND_URL || 'https://nikitadev.netlify.app/';
+        process.env.REACT_APP_BACKEND_URL || 'https://nikitadev.netlify.app';
 
       const response = await fetch(`${backendURL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          message: formData.message.trim(),
+        }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        dispatch({ type: 'SUBMIT_SUCCESS' });
+        dispatch({ type: ACTION_TYPES.SUBMIT_SUCCESS });
       } else {
         dispatch({
-          type: 'SUBMIT_FAILURE',
+          type: ACTION_TYPES.SUBMIT_FAILURE,
           error: result.error || 'Form submission error. Please try again later.',
         });
       }
     } catch (networkError) {
       console.error(networkError);
       dispatch({
-        type: 'SUBMIT_FAILURE',
+        type: ACTION_TYPES.SUBMIT_FAILURE,
         error: 'Network error. Please try again later.',
       });
     }
@@ -351,11 +385,28 @@ const Contact = ({ darkMode = false }) => {
 
   // Handler to reset the sent state
   const handleReset = useCallback(() => {
-    dispatch({ type: 'RESET_SENT' });
+    dispatch({ type: ACTION_TYPES.RESET_SENT });
     if (formRef.current) {
       formRef.current.focus();
     }
   }, []);
+
+  // Effect to focus on success message when sent
+  useEffect(() => {
+    if (isSent && successRef.current) {
+      successRef.current.focus();
+    }
+  }, [isSent]);
+
+  // Memoize the theme classes to prevent unnecessary recalculations
+  const themeClasses = useMemo(
+    () => ({
+      container: darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black',
+      formBackground: darkMode ? 'bg-gray-800' : 'bg-white',
+      infoBackground: darkMode ? 'bg-gray-800' : 'bg-white',
+    }),
+    [darkMode]
+  );
 
   return (
     <motion.section
@@ -363,9 +414,7 @@ const Contact = ({ darkMode = false }) => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
-      className={`p-6 sm:p-8 ${
-        darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
-      }`}
+      className={`p-6 sm:p-8 ${themeClasses.container}`}
       aria-labelledby="contact-heading"
     >
       <div className="container mx-auto text-center">
@@ -378,9 +427,7 @@ const Contact = ({ darkMode = false }) => {
         <div className="flex flex-col items-center space-y-8 w-full max-w-2xl mx-auto">
           {/* Contact Form */}
           <motion.div
-            className={`rounded-lg shadow-lg p-6 w-full ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}
+            className={`rounded-lg shadow-lg p-6 w-full ${themeClasses.formBackground}`}
             whileHover={{ scale: 1.02 }}
           >
             <AnimatePresence>
@@ -400,7 +447,7 @@ const Contact = ({ darkMode = false }) => {
                     className="text-4xl mb-4"
                     aria-hidden="true"
                   />
-                  <p>Thank you, {formData.name || 'Guest'}!</p>
+                  <p>Thank you, {sentData?.name || 'Guest'}!</p>
                   <p>Your message has been sent successfully. I'll get back to you soon.</p>
                   <button
                     onClick={handleReset}
@@ -425,6 +472,7 @@ const Contact = ({ darkMode = false }) => {
                     className="hidden"
                     tabIndex="-1"
                     autoComplete="off"
+                    aria-hidden="true"
                   />
 
                   <InputField
@@ -465,10 +513,16 @@ const Contact = ({ darkMode = false }) => {
                     darkMode={darkMode}
                   />
                   {errors.form && (
-                    <p className="text-red-500 text-sm mb-2 flex items-center justify-center">
+                    <motion.p
+                      className="text-red-500 text-sm mb-2 flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />
                       {errors.form}
-                    </p>
+                    </motion.p>
                   )}
                   <div className="flex items-center justify-center">
                     <button
@@ -519,9 +573,7 @@ const Contact = ({ darkMode = false }) => {
 
           {/* Contact Information */}
           <motion.div
-            className={`rounded-lg shadow-lg p-6 w-full text-center ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}
+            className={`rounded-lg shadow-lg p-6 w-full text-center ${themeClasses.infoBackground}`}
             whileHover={{ scale: 1.02 }}
           >
             <FontAwesomeIcon
@@ -529,13 +581,14 @@ const Contact = ({ darkMode = false }) => {
               className="text-4xl text-blue-500 mb-4"
               aria-hidden="true"
             />
-            <p className="text-lg sm:text-xl mb-2">nikita.development@gmail.com</p>
+            <p className="text-lg sm:text-xl mb-2">n.verk06@gmai.com</p>
             <button
               type="button"
               className="bg-blue-500 text-white font-bold py-3 px-6 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
               onClick={() =>
-                window.open('mailto:nikita.development@gmail.com', '_blank')
+                window.open('https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox?compose=CllgCJlKFcBWWjjqQSwZTKTwCKHJxKjHcCcCWWbNHKnxJRNzCcBRqphztfqRxCvnDMjFPmPMMHL')
               }
+              aria-label="Send an email to n.verk06@gmai.com"
             >
               Email Me
             </button>

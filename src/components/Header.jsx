@@ -79,7 +79,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     toggleDarkMode();
     const newMode = !darkMode;
     localStorage.setItem('darkMode', JSON.stringify(newMode));
-    const message = newMode ? 'Dark Mode Enabled' : 'Light Mode Enabled';
+    const message = newMode ? 'Dark Mode' : 'Light Mode';
     setModeMessage(message);
     setShowModeMessage(true);
     setTimeout(() => setShowModeMessage(false), 2000);
