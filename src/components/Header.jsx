@@ -1,3 +1,5 @@
+// src/components/Header.jsx
+
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +19,10 @@ import {
   faInstagram,
   faLinkedin,
 } from '@fortawesome/free-brands-svg-icons';
+import classNames from 'classnames';
+
+// Define a motion-enhanced version of FontAwesomeIcon
+const MotionFontAwesomeIcon = motion(FontAwesomeIcon);
 
 const Header = ({ toggleDarkMode, darkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +33,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
   const [activeSection, setActiveSection] = useState('about');
 
   const sections = ['about', 'projects', 'skills', 'contact'];
+
+  // Mapping object for section icons
+  const sectionIcons = {
+    about: faInfoCircle,
+    projects: faProjectDiagram,
+    skills: faTools,
+    contact: faEnvelope,
+  };
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
@@ -85,27 +99,78 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     setTimeout(() => setShowModeMessage(false), 2000);
   };
 
-  const hoverAnimation = {
-    scale: 1.1,
-    transition: { duration: 0.2 },
+  // Variants for Navbar Links
+  const navLinkVariants = {
+    initial: { opacity: 1, scale: 1, y: 0 },
+    hover: { 
+      scale: 1.1,
+      y: -5,
+      transition: { type: 'spring', stiffness: 300 },
+    },
   };
 
-  const modeMessageVariants = {
-    hidden: { opacity: 0, y: 20, visibility: 'hidden' },
-    visible: {
-      opacity: 1,
-      y: 0,
-      visibility: 'visible',
+  // Variants for Underline Animation
+  const underlineVariants = {
+    initial: { width: 0 },
+    hover: { 
+      width: '100%', 
+      transition: { duration: 0.3, ease: 'easeOut' } 
+    },
+    active: {
+      width: '100%',
       transition: { duration: 0.3, ease: 'easeOut' },
     },
-    exit: {
-      opacity: 0,
-      y: 20,
-      visibility: 'hidden',
-      transition: { duration: 0.3, ease: 'easeIn' },
+  };
+
+  // Variants for Icons in Navbar and Social Links
+  const iconVariants = {
+    initial: { rotate: 0, color: 'inherit', scale: 1 },
+    hover: { 
+      rotate: [0, 15, -10, 0], // Keyframes for pulsing effect
+      color: '#F59E0B', // Example color (yellow-400)
+      scale: 1.2, // Slight scale up on hover
+      transition: { duration: 0.6 },
+    },
+    active: {
+      color: '#F59E0B',
+      scale: 1.2,
+      transition: { duration: 0.3 },
     },
   };
 
+  // Variants for Sidebar Links
+  const sidebarLinkVariants = {
+    hidden: { opacity: 0, x: 50 },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { type: 'spring', stiffness: 300, delay: 0.2 },
+    },
+    hover: { 
+      scale: 1.05,
+      x: 5,
+      transition: { type: 'spring', stiffness: 300 },
+    },
+    active: {
+      scale: 1.1,
+      backgroundColor: darkMode ? 'rgba(234, 179, 8, 0.2)' : 'rgba(251, 191, 36, 0.2)',
+      transition: { duration: 0.3 },
+    },
+  };
+
+  // Variants for Sidebar Icons
+  const sidebarIconVariants = {
+    initial: { y: 0 },
+    hover: { 
+      y: -5, 
+      transition: { 
+        yoyo: Infinity, 
+        duration: 0.3,
+      },
+    },
+  };
+
+  // Variants for Social Links Animation
   const socialLinksVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.8 },
     visible: {
@@ -126,12 +191,47 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: 10 },
+    hover: { 
+      scale: 1.2,
+      color: '#F59E0B',
+      transition: { duration: 0.3 },
+    },
   };
 
+  // Variants for Sidebar Animation
   const sidebarVariants = {
     hidden: { x: '100%' },
-    visible: { x: 0, transition: { duration: 0.5, ease: 'easeInOut' } },
-    exit: { x: '100%', transition: { duration: 0.5, ease: 'easeInOut' } },
+    visible: { 
+      x: 0, 
+      transition: { 
+        duration: 0.5, 
+        ease: 'easeInOut',
+      },
+    },
+    exit: { 
+      x: '100%', 
+      transition: { 
+        duration: 0.5, 
+        ease: 'easeInOut',
+      },
+    },
+  };
+
+  // Variants for Mode Message
+  const modeMessageVariants = {
+    hidden: { opacity: 0, y: 20, visibility: 'hidden' },
+    visible: {
+      opacity: 1,
+      y: 0,
+      visibility: 'visible',
+      transition: { duration: 0.3, ease: 'easeOut' },
+    },
+    exit: {
+      opacity: 0,
+      y: 20,
+      visibility: 'hidden',
+      transition: { duration: 0.3, ease: 'easeIn' },
+    },
   };
 
   return (
@@ -139,17 +239,18 @@ const Header = ({ toggleDarkMode, darkMode }) => {
       initial={{ y: -250 }}
       animate={{ y: 0 }}
       transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
-      className={`p-4 fixed w-full top-0 z-50 shadow-lg ${
+      className={classNames(
+        'p-4 fixed w-full top-0 z-50 shadow-lg',
         darkMode
           ? 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 text-gray-200'
           : 'bg-gradient-to-r from-white via-gray-100 to-gray-200 text-gray-800'
-      }`}
+      )}
     >
       <div className="container mx-auto flex justify-between items-center px-4 md:px-8">
         {/* Header Title */}
         <motion.h1
           className="text-3xl md:text-4xl font-extrabold tracking-tight cursor-default"
-          whileHover={hoverAnimation}
+          whileHover={{ scale: 1.05 }}
         >
           My Portfolio
         </motion.h1>
@@ -160,26 +261,31 @@ const Header = ({ toggleDarkMode, darkMode }) => {
             <motion.a
               key={index}
               href={`#${section}`}
-              className={`relative flex items-center group ${
-                activeSection === section ? 'text-yellow-400' : ''
-              }`}
-              whileHover={{ scale: 1.05 }}
+              className={`relative flex flex-col items-center group`}
+              variants={navLinkVariants}
+              initial="initial"
+              whileHover="hover"
+              animate="initial"
+              aria-current={activeSection === section ? 'page' : undefined}
             >
-              <FontAwesomeIcon
-                icon={
-                  section === 'about'
-                    ? faInfoCircle
-                    : section === 'projects'
-                    ? faProjectDiagram
-                    : section === 'skills'
-                    ? faTools
-                    : faEnvelope
-                }
-                className="mr-2"
-              />
-              {section.charAt(0).toUpperCase() + section.slice(1)}
               <motion.div
-                className="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                className={classNames('flex items-center', {
+                  'font-semibold': activeSection === section,
+                })}
+              >
+                <MotionFontAwesomeIcon
+                  icon={sectionIcons[section] || faEnvelope}
+                  className="mr-2"
+                  variants={iconVariants}
+                  animate={activeSection === section ? 'active' : 'initial'}
+                  whileHover="hover"
+                />
+                <span>{section.charAt(0).toUpperCase() + section.slice(1)}</span>
+              </motion.div>
+              {/* Underline */}
+              <motion.div
+                className="h-0.5 bg-yellow-400 mt-1 w-full"
+                variants={activeSection === section ? underlineVariants.active : underlineVariants}
               />
             </motion.a>
           ))}
@@ -201,9 +307,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                   rel="noopener noreferrer"
                   className="relative group"
                   variants={individualSocialVariant}
-                  whileHover={hoverAnimation}
+                  aria-label="GitHub"
                 >
-                  <FontAwesomeIcon icon={faGithub} className="text-2xl md:text-3xl" />
+                  <MotionFontAwesomeIcon
+                    icon={faGithub}
+                    className="text-2xl md:text-3xl"
+                    variants={iconVariants}
+                    whileHover="hover"
+                  />
                   {/* Tooltip */}
                   <motion.span
                     className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap"
@@ -223,9 +334,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                   rel="noopener noreferrer"
                   className="relative group"
                   variants={individualSocialVariant}
-                  whileHover={hoverAnimation}
+                  aria-label="Instagram"
                 >
-                  <FontAwesomeIcon icon={faInstagram} className="text-2xl md:text-3xl" />
+                  <MotionFontAwesomeIcon
+                    icon={faInstagram}
+                    className="text-2xl md:text-3xl"
+                    variants={iconVariants}
+                    whileHover="hover"
+                  />
                   {/* Tooltip */}
                   <motion.span
                     className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap"
@@ -245,9 +361,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                   rel="noopener noreferrer"
                   className="relative group"
                   variants={individualSocialVariant}
-                  whileHover={hoverAnimation}
+                  aria-label="LinkedIn"
                 >
-                  <FontAwesomeIcon icon={faLinkedin} className="text-2xl md:text-3xl" />
+                  <MotionFontAwesomeIcon
+                    icon={faLinkedin}
+                    className="text-2xl md:text-3xl"
+                    variants={iconVariants}
+                    whileHover="hover"
+                  />
                   {/* Tooltip */}
                   <motion.span
                     className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap"
@@ -268,6 +389,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
             className="hover:underline flex items-center px-4 py-2 bg-yellow-400 text-black font-bold rounded-full transition duration-300 hover:bg-yellow-500"
             onClick={handleSocialLinksToggle}
             whileHover={{ scale: 1.05 }}
+            aria-label="Toggle Social Links"
           >
             <FontAwesomeIcon icon={faUserFriends} className="mr-2" />
             {showSocialLinks ? 'Close' : 'Social'}
@@ -301,10 +423,33 @@ const Header = ({ toggleDarkMode, darkMode }) => {
 
         {/* Mobile Hamburger Icon */}
         <div className="lg:hidden ml-auto" onClick={handleToggle}>
-          <motion.div className={`hamburger ${loaded ? 'loaded' : ''}`}>
-            <div className={`line line1 ${darkMode ? 'bg-white' : 'bg-black'}`}></div>
-            <div className={`line line2 ${darkMode ? 'bg-white' : 'bg-black'}`}></div>
-            <div className={`line line3 ${darkMode ? 'bg-white' : 'bg-black'}`}></div>
+          <motion.div
+            className={`hamburger ${loaded ? 'loaded' : ''}`}
+            initial={false}
+            animate={isOpen ? 'open' : 'closed'}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              className={`line line1 ${darkMode ? 'bg-white' : 'bg-black'}`}
+              variants={{
+                closed: { rotate: 0, y: 0 },
+                open: { rotate: 45, y: 8 },
+              }}
+            />
+            <motion.div
+              className={`line line2 ${darkMode ? 'bg-white' : 'bg-black'}`}
+              variants={{
+                closed: { opacity: 1 },
+                open: { opacity: 0 },
+              }}
+            />
+            <motion.div
+              className={`line line3 ${darkMode ? 'bg-white' : 'bg-black'}`}
+              variants={{
+                closed: { rotate: 0, y: 0 },
+                open: { rotate: -45, y: -8 },
+              }}
+            />
           </motion.div>
         </div>
       </div>
@@ -329,11 +474,12 @@ const Header = ({ toggleDarkMode, darkMode }) => {
               animate="visible"
               exit="exit"
               variants={sidebarVariants}
-              className={`fixed top-0 right-0 h-full w-80 ${
+              className={classNames(
+                'fixed top-0 right-0 h-full w-80 p-6 overflow-y-auto z-50 shadow-lg rounded-l-lg',
                 darkMode
                   ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200'
                   : 'bg-gradient-to-b from-white to-gray-100 text-gray-800'
-              } p-6 overflow-y-auto z-50 shadow-lg rounded-l-lg`}
+              )}
             >
               {/* Sidebar Header */}
               <div className="flex justify-between items-center mb-6">
@@ -363,30 +509,37 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                   <motion.a
                     key={index}
                     href={`#${section}`}
-                    className={`flex items-center py-3 px-4 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
-                      activeSection === section
-                        ? 'bg-gray-300 dark:bg-gray-600'
-                        : ''
-                    }`}
+                    className={`flex items-center py-3 px-4 rounded transition-colors`}
                     onClick={handleToggle}
-                    variants={individualSocialVariant}
-                    whileHover={{ scale: 1.05 }}
+                    variants={sidebarLinkVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="hover"
+                    aria-label={`Navigate to ${section}`}
                   >
-                    <FontAwesomeIcon
-                      icon={
-                        section === 'about'
-                          ? faInfoCircle
-                          : section === 'projects'
-                          ? faProjectDiagram
-                          : section === 'skills'
-                          ? faTools
-                          : faEnvelope
-                      }
+                    <MotionFontAwesomeIcon
+                      icon={sectionIcons[section] || faEnvelope}
                       className="mr-3 text-lg"
+                      variants={sidebarIconVariants}
+                      animate={activeSection === section ? 'active' : 'initial'}
                     />
-                    <span className="text-lg">
+                    <span
+                      className={classNames('text-lg', {
+                        'font-semibold': activeSection === section,
+                      })}
+                    >
                       {section.charAt(0).toUpperCase() + section.slice(1)}
                     </span>
+                    {/* Active Indicator */}
+                    {activeSection === section && (
+                      <motion.div
+                        className="ml-auto w-2 h-2 bg-yellow-400 rounded-full"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
                   </motion.a>
                 ))}
               </div>
@@ -398,7 +551,10 @@ const Header = ({ toggleDarkMode, darkMode }) => {
               <div className="mt-4 flex flex-col items-start space-y-4">
                 {/* Dark Mode Toggle */}
                 <motion.button
-                  onClick={handleModeToggle}
+                  onClick={() => {
+                    handleToggle();
+                    handleModeToggle();
+                  }}
                   className="flex items-center px-4 py-2 rounded-full bg-yellow-400 text-black font-bold transition duration-300 hover:bg-yellow-500 space-x-2"
                   whileHover={{ scale: 1.05 }}
                   aria-label="Toggle Dark Mode"
@@ -448,10 +604,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                         rel="noopener noreferrer"
                         className="flex items-center space-x-2 text-lg hover:text-yellow-400 transition-colors"
                         variants={individualSocialVariant}
-                        whileHover={hoverAnimation}
+                        whileHover="hover"
                         aria-label="GitHub"
                       >
-                        <FontAwesomeIcon icon={faGithub} className="text-2xl" />
+                        <MotionFontAwesomeIcon
+                          icon={faGithub}
+                          className="text-2xl"
+                          variants={iconVariants}
+                        />
                         <span>GitHub</span>
                       </motion.a>
 
@@ -462,10 +622,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                         rel="noopener noreferrer"
                         className="flex items-center space-x-2 text-lg hover:text-yellow-400 transition-colors"
                         variants={individualSocialVariant}
-                        whileHover={hoverAnimation}
+                        whileHover="hover"
                         aria-label="Instagram"
                       >
-                        <FontAwesomeIcon icon={faInstagram} className="text-2xl" />
+                        <MotionFontAwesomeIcon
+                          icon={faInstagram}
+                          className="text-2xl"
+                          variants={iconVariants}
+                        />
                         <span>Instagram</span>
                       </motion.a>
 
@@ -476,10 +640,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                         rel="noopener noreferrer"
                         className="flex items-center space-x-2 text-lg hover:text-yellow-400 transition-colors"
                         variants={individualSocialVariant}
-                        whileHover={hoverAnimation}
+                        whileHover="hover"
                         aria-label="LinkedIn"
                       >
-                        <FontAwesomeIcon icon={faLinkedin} className="text-2xl" />
+                        <MotionFontAwesomeIcon
+                          icon={faLinkedin}
+                          className="text-2xl"
+                          variants={iconVariants}
+                        />
                         <span>LinkedIn</span>
                       </motion.a>
                     </motion.div>
