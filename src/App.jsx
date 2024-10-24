@@ -1,6 +1,6 @@
 // src/App.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -20,15 +20,53 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 const App = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  // Initialize darkMode state based on localStorage or system preference
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check localStorage for saved mode
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) {
+      return JSON.parse(savedMode);
+    } else {
+      // Optional: Default to system preference
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+  });
 
-  // Toggle dark mode state
+  // Function to toggle dark mode and save preference to localStorage
   const toggleDarkMode = () => {
-    setDarkMode((prevMode) => !prevMode);
+    setDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      localStorage.setItem('darkMode', JSON.stringify(newMode));
+      return newMode;
+    });
   };
 
+  // Apply or remove the 'dark' class on the root element based on darkMode state
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // Optional: Listen to system preference changes and update darkMode state
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      setDarkMode(e.matches);
+      localStorage.setItem('darkMode', JSON.stringify(e.matches));
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
   return (
-    // Apply dark mode class to the root div
+    // The 'dark' class is applied based on the darkMode state
     <div className={darkMode ? 'dark' : ''}>
       {/* Wrap the application with Router */}
       <Router>

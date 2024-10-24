@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  Suspense,
+  lazy,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import { motion, useAnimation } from 'framer-motion';
 import { IoIosArrowDown } from 'react-icons/io';
@@ -10,6 +17,37 @@ const Typewriter = lazy(() => import('typewriter-effect'));
 const Particles = lazy(() => import('react-tsparticles'));
 
 /**
+ * ErrorBoundary Component
+ * Catches errors in its child components and displays a fallback UI.
+ */
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(/*error*/) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('Error loading component:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
+
+ErrorBoundary.propTypes = {
+  children: PropTypes.node.isRequired,
+  fallback: PropTypes.node,
+};
+
+/**
  * ParticleBackground Component
  * Renders the particle effect using react-tsparticles.
  */
@@ -19,7 +57,7 @@ const ParticleBackground = ({ darkMode, particleCount }) => {
   }, []);
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="absolute inset-0 z-0 bg-transparent" />}>
       <Particles
         id="tsparticles"
         init={particlesInit}
@@ -64,34 +102,45 @@ ParticleBackground.propTypes = {
  * Hero Component
  * Main hero section with animated text, particle background, and scroll down arrow.
  */
-const Hero = ({ darkMode = false }) => {
+const Hero = ({
+  darkMode = false,
+  backgroundImage = '/path-to-your-image.jpg', // Make background image configurable
+}) => {
   const controls = useAnimation();
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.3,
   });
 
-  const [particleCount, setParticleCount] = useState(getParticleCount());
-
   // Determine particle count based on window width
-  function getParticleCount() {
+  const getParticleCount = useCallback(() => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 640) return 20;
       if (window.innerWidth < 768) return 30;
       return 50;
     }
     return 50; // Default particle count for SSR
-  }
+  }, []);
 
-  // Handle window resize to adjust particle count
+  const [particleCount, setParticleCount] = useState(getParticleCount());
+
+  // Handle window resize with debounce
   useEffect(() => {
+    let debounceTimeout;
+
     const handleResize = () => {
-      setParticleCount(getParticleCount());
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        setParticleCount(getParticleCount());
+      }, 200); // 200ms debounce
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    return () => {
+      clearTimeout(debounceTimeout);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [getParticleCount]);
 
   // Start animations when component is in view
   useEffect(() => {
@@ -125,6 +174,22 @@ const Hero = ({ darkMode = false }) => {
 
   const sentence = 'Welcome to My Portfolio';
 
+  // Memoize the animated letters to prevent unnecessary re-renders
+  const animatedLetters = useMemo(
+    () =>
+      sentence.split('').map((char, index) => (
+        <motion.span
+          key={index}
+          custom={index}
+          variants={letterVariants}
+          className="inline-block"
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </motion.span>
+      )),
+    [sentence]
+  );
+
   return (
     <section
       id="hero"
@@ -138,18 +203,20 @@ const Hero = ({ darkMode = false }) => {
       <div
         className="absolute inset-0 bg-fixed bg-cover bg-center"
         style={{
-          backgroundImage: 'url("/path-to-your-image.jpg")', // Update with your image path
+          backgroundImage: `url("${backgroundImage}")`,
           zIndex: -3,
         }}
         aria-hidden="true"
       ></div>
 
       {/* Particle Effect */}
-      {particleCount > 0 && <ParticleBackground darkMode={darkMode} particleCount={particleCount} />}
+      {particleCount > 0 && (
+        <ParticleBackground darkMode={darkMode} particleCount={particleCount} />
+      )}
 
       {/* Responsive Overlay */}
       <div
-        className="absolute inset-0 bg-opacity-50"
+        className="absolute inset-0"
         style={{
           backgroundColor: darkMode
             ? 'rgba(0, 0, 0, 0.5)'
@@ -176,16 +243,7 @@ const Hero = ({ darkMode = false }) => {
           }}
           aria-label={sentence}
         >
-          {sentence.split('').map((char, index) => (
-            <motion.span
-              key={index}
-              custom={index}
-              variants={letterVariants}
-              className="inline-block"
-            >
-              {char === ' ' ? '\u00A0' : char}
-            </motion.span>
-          ))}
+          {animatedLetters}
         </motion.h1>
 
         {/* Subheading with Typewriter Effect */}
@@ -195,21 +253,23 @@ const Hero = ({ darkMode = false }) => {
           animate={controls}
           variants={paragraphVariants}
         >
-          <Suspense fallback={<span>Loading...</span>}>
-            <Typewriter
-              options={{
-                strings: [
-                  'DevOps Engineer',
-                  'Cloud Enthusiast',
-                  'Automation Expert',
-                ],
-                autoStart: true,
-                loop: true,
-                delay: 50,
-                deleteSpeed: 30,
-              }}
-            />
-          </Suspense>
+          <ErrorBoundary fallback={<span>Failed to load description.</span>}>
+            <Suspense fallback={<span>Loading...</span>}>
+              <Typewriter
+                options={{
+                  strings: [
+                    'DevOps Engineer',
+                    'Cloud Enthusiast',
+                    'Automation Expert',
+                  ],
+                  autoStart: true,
+                  loop: true,
+                  delay: 50,
+                  deleteSpeed: 30,
+                }}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </motion.p>
       </div>
 
@@ -245,6 +305,7 @@ const Hero = ({ darkMode = false }) => {
 
 Hero.propTypes = {
   darkMode: PropTypes.bool,
+  backgroundImage: PropTypes.string,
 };
 
 export default React.memo(Hero);

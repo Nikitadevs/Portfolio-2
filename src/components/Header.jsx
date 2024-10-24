@@ -25,13 +25,20 @@ import classNames from 'classnames';
 const MotionFontAwesomeIcon = motion(FontAwesomeIcon);
 
 const Header = ({ toggleDarkMode, darkMode }) => {
+  // State to handle mobile sidebar visibility
   const [isOpen, setIsOpen] = useState(false);
+  
+  // State to handle visibility of social links
   const [showSocialLinks, setShowSocialLinks] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  
+  // States to handle dark mode toggle messages
   const [showModeMessage, setShowModeMessage] = useState(false);
   const [modeMessage, setModeMessage] = useState('');
+  
+  // State to track the currently active section based on scroll
   const [activeSection, setActiveSection] = useState('about');
 
+  // Array of section IDs corresponding to portfolio sections
   const sections = ['about', 'projects', 'skills', 'contact'];
 
   // Mapping object for section icons
@@ -42,30 +49,33 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     contact: faEnvelope,
   };
 
+  // Handle scroll to set active section
   useEffect(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null && JSON.parse(savedMode) !== darkMode) {
-      toggleDarkMode();
-    }
-    setLoaded(true);
-
     const handleScroll = () => {
       const scrollPosition = window.scrollY + window.innerHeight / 2;
-      let active = 'about';
+      let currentSection = 'about'; // Default section
+
       sections.forEach((section) => {
         const element = document.getElementById(section);
         if (element && scrollPosition >= element.offsetTop) {
-          active = section;
+          currentSection = section;
         }
       });
-      setActiveSection(active);
+
+      setActiveSection(currentSection);
     };
 
+    // Attach the scroll event listener
     window.addEventListener('scroll', handleScroll);
+
+    // Initial check
+    handleScroll();
+
+    // Cleanup function to remove the listener on component unmount
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [darkMode, toggleDarkMode, sections]);
+  }, [sections]);
 
   useEffect(() => {
     // Prevent scrolling when sidebar is open
@@ -81,61 +91,66 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     };
   }, [isOpen]);
 
+  // Function to toggle mobile sidebar
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
 
+  // Function to toggle visibility of social links
   const handleSocialLinksToggle = () => {
     setShowSocialLinks(!showSocialLinks);
   };
 
+  // Function to toggle dark mode and display a temporary message
   const handleModeToggle = () => {
     toggleDarkMode();
     const newMode = !darkMode;
-    localStorage.setItem('darkMode', JSON.stringify(newMode));
     const message = newMode ? 'Dark Mode' : 'Light Mode';
     setModeMessage(message);
     setShowModeMessage(true);
     setTimeout(() => setShowModeMessage(false), 2000);
   };
 
-  // Common variants for hover and active states
+  // Common variants for hover states
   const commonHover = {
-    scale: 1.05,
+    scale: 1.1,
     transition: { type: 'spring', stiffness: 300 },
   };
 
+  // Variants for navigation links
   const navLinkVariants = {
     initial: { opacity: 1, scale: 1, y: 0 },
     hover: { ...commonHover },
   };
 
+  // Underline animation variants without 'active' state
   const underlineVariants = {
-    initial: { width: 0 },
-    hover: {
-      width: '100%',
-      transition: { duration: 0.3, ease: 'easeOut' },
+    initial: { 
+      scaleX: 0,
+      transition: { duration: 0.3, ease: 'linear' }, // Linear transition
     },
-    active: {
-      width: '100%',
-      transition: { duration: 0.3, ease: 'easeOut' },
+    hover: { 
+      scaleX: 1,
+      transition: { duration: 0.3, ease: 'linear' }, // Linear transition
     },
   };
 
+  // Updated iconVariants with 'active' state
   const iconVariants = {
     initial: { color: 'inherit', scale: 1 },
     hover: {
-      scale: 1.2,
+      scale: 1.3,
       color: '#F59E0B',
       transition: { duration: 0.3 },
     },
     active: {
+      scale: 1.4,
       color: '#F59E0B',
-      scale: 1.2,
       transition: { duration: 0.3 },
     },
   };
 
+  // Variants for sidebar navigation links
   const sidebarLinkVariants = {
     hidden: { opacity: 0, x: 50 },
     visible: {
@@ -157,6 +172,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     },
   };
 
+  // Variants for sidebar icons
   const sidebarIconVariants = {
     initial: { y: 0 },
     hover: {
@@ -166,9 +182,14 @@ const Header = ({ toggleDarkMode, darkMode }) => {
         duration: 0.3,
       },
     },
+    active: {
+      scale: 1.4,
+      color: '#F59E0B',
+      transition: { duration: 0.3 },
+    },
   };
 
-  // Updated socialLinksVariants for consistent animation in navbar and sidebar
+  // Variants for social links animations
   const socialLinksVariants = {
     hidden: {},
     visible: {
@@ -185,7 +206,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     },
   };
 
-  // Updated individualSocialVariant for entrance animation
+  // Variants for individual social link animations
   const individualSocialVariant = {
     hidden: { opacity: 0, y: 20, scale: 0.8 },
     visible: {
@@ -201,12 +222,18 @@ const Header = ({ toggleDarkMode, darkMode }) => {
       transition: { type: 'spring', stiffness: 100, damping: 10 },
     },
     hover: {
-      scale: 1.3,
+      scale: 1.4,
+      color: '#F59E0B',
+      transition: { duration: 0.3 },
+    },
+    active: {
+      scale: 1.4,
       color: '#F59E0B',
       transition: { duration: 0.3 },
     },
   };
 
+  // Variants for mobile sidebar animations
   const sidebarVariants = {
     hidden: { x: '100%' },
     visible: {
@@ -225,6 +252,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
     },
   };
 
+  // Variants for mode toggle message animations
   const modeMessageVariants = {
     hidden: { opacity: 0, y: 20, visibility: 'hidden' },
     visible: {
@@ -273,30 +301,28 @@ const Header = ({ toggleDarkMode, darkMode }) => {
               initial="initial"
               whileHover="hover"
               animate="initial"
-              aria-current={activeSection === section ? 'page' : undefined}
+              aria-label={`Navigate to ${section}`}
             >
               <motion.div
                 className={classNames('flex items-center', {
-                  'font-semibold': activeSection === section,
+                  'font-semibold': activeSection === section, // Bold text for active section
                 })}
               >
                 <MotionFontAwesomeIcon
                   icon={sectionIcons[section] || faEnvelope}
                   className="mr-2"
                   variants={iconVariants}
-                  animate={activeSection === section ? 'active' : 'initial'}
+                  animate={activeSection === section ? 'active' : 'initial'} // Apply 'active' variant if active
                   whileHover="hover"
                 />
                 <span>{section.charAt(0).toUpperCase() + section.slice(1)}</span>
               </motion.div>
-              {/* Underline */}
+              {/* Underline remains only on hover */}
               <motion.div
-                className="h-0.5 bg-yellow-400 mt-1 w-full"
-                variants={
-                  activeSection === section ? underlineVariants.active : underlineVariants
-                }
+                className="h-0.5 bg-yellow-400 mt-1 w-full origin-left"
+                variants={underlineVariants}
                 initial="initial"
-                animate={activeSection === section ? 'active' : 'initial'}
+                animate="initial"
                 whileHover="hover"
               />
             </motion.a>
@@ -325,9 +351,9 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                     icon={faGithub}
                     className="text-2xl md:text-4xl"
                     variants={iconVariants}
+                    animate="initial"
                     whileHover="hover"
                   />
-                  {/* Removed the <span> element to eliminate text */}
                 </motion.a>
 
                 {/* Instagram */}
@@ -343,9 +369,9 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                     icon={faInstagram}
                     className="text-2xl md:text-4xl"
                     variants={iconVariants}
+                    animate="initial"
                     whileHover="hover"
                   />
-                  {/* Removed the <span> element to eliminate text */}
                 </motion.a>
 
                 {/* LinkedIn */}
@@ -361,9 +387,9 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                     icon={faLinkedin}
                     className="text-2xl md:text-4xl"
                     variants={iconVariants}
+                    animate="initial"
                     whileHover="hover"
                   />
-                  {/* Removed the <span> element to eliminate text */}
                 </motion.a>
               </motion.div>
             )}
@@ -409,7 +435,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
         {/* Mobile Hamburger Icon */}
         <div className="lg:hidden ml-auto" onClick={handleToggle}>
           <motion.div
-            className={`hamburger ${loaded ? 'loaded' : ''}`}
+            className={`hamburger ${/* loaded ? 'loaded' : '' */ ''}`} // Removed 'loaded' as it's not set in the code
             initial={false}
             animate={isOpen ? 'open' : 'closed'}
             transition={{ duration: 0.5 }}
@@ -420,6 +446,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                 closed: { rotate: 0, y: 0 },
                 open: { rotate: 45, y: 8 },
               }}
+              transition={{ duration: 0.5 }}
             />
             <motion.div
               className={`line line2 ${darkMode ? 'bg-white' : 'bg-black'}`}
@@ -427,6 +454,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                 closed: { opacity: 1 },
                 open: { opacity: 0 },
               }}
+              transition={{ duration: 0.5 }}
             />
             <motion.div
               className={`line line3 ${darkMode ? 'bg-white' : 'bg-black'}`}
@@ -434,6 +462,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                 closed: { rotate: 0, y: 0 },
                 open: { rotate: -45, y: -8 },
               }}
+              transition={{ duration: 0.5 }}
             />
           </motion.div>
         </div>
@@ -506,25 +535,16 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                       icon={sectionIcons[section] || faEnvelope}
                       className="mr-3 text-lg"
                       variants={sidebarIconVariants}
-                      animate={activeSection === section ? 'hover' : 'initial'}
+                      animate={activeSection === section ? 'active' : 'initial'} // Apply 'active' variant if active
+                      whileHover="hover"
                     />
                     <span
                       className={classNames('text-lg', {
-                        'font-semibold': activeSection === section,
+                        'font-semibold': activeSection === section, // Bold text for active section
                       })}
                     >
                       {section.charAt(0).toUpperCase() + section.slice(1)}
                     </span>
-                    {/* Active Indicator */}
-                    {activeSection === section && (
-                      <motion.div
-                        className="ml-auto w-2 h-2 bg-yellow-400 rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    )}
                   </motion.a>
                 ))}
               </div>
@@ -594,6 +614,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                           icon={faGithub}
                           className="text-2xl md:text-4xl"
                           variants={iconVariants}
+                          animate="initial"
                           whileHover="hover"
                         />
                         <span className="text-base md:text-lg">GitHub</span>
@@ -612,6 +633,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                           icon={faInstagram}
                           className="text-2xl md:text-4xl"
                           variants={iconVariants}
+                          animate="initial"
                           whileHover="hover"
                         />
                         <span className="text-base md:text-lg">Instagram</span>
@@ -630,6 +652,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
                           icon={faLinkedin}
                           className="text-2xl md:text-4xl"
                           variants={iconVariants}
+                          animate="initial"
                           whileHover="hover"
                         />
                         <span className="text-base md:text-lg">LinkedIn</span>
