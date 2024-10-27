@@ -6,6 +6,7 @@ import React, {
   useRef,
   useEffect,
   useMemo,
+  useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +21,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import emailjs from 'emailjs-com'; // <-- Import EmailJS
 
-// Action Types
 const ACTION_TYPES = {
   UPDATE_FIELD: 'UPDATE_FIELD',
   SET_ERRORS: 'SET_ERRORS',
@@ -30,7 +30,6 @@ const ACTION_TYPES = {
   RESET_SENT: 'RESET_SENT',
 };
 
-// Initial State for useReducer
 const initialState = {
   formData: {
     name: '',
@@ -49,7 +48,6 @@ const initialState = {
   isSent: false,
 };
 
-// Reducer Function
 function reducer(state, action) {
   switch (action.type) {
     case ACTION_TYPES.UPDATE_FIELD:
@@ -99,7 +97,6 @@ function reducer(state, action) {
   }
 }
 
-// Reusable Input Field Component
 const InputField = memo(function InputField({
   label,
   icon,
@@ -179,7 +176,6 @@ InputField.propTypes = {
   ]),
 };
 
-// Reusable TextArea Field Component
 const TextAreaField = memo(function TextAreaField({
   label,
   icon,
@@ -251,14 +247,11 @@ TextAreaField.propTypes = {
   darkMode: PropTypes.bool,
 };
 
-// Email Validation Function
 const validateEmail = (email) => {
-  // Improved email validation regex
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(email);
 };
 
-// Custom Hook for Form Handling
 const useContactForm = (dispatch, formData) => {
   const handleChange = useCallback(
     (e) => {
@@ -306,7 +299,50 @@ const useContactForm = (dispatch, formData) => {
   return { handleChange, validateForm };
 };
 
-// Main Contact Component
+// Animation Variants
+const cardVariants = {
+  initial: { opacity: 0, y: 50 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -50 },
+  hover: {
+    scale: 1.03,
+    boxShadow: '0px 10px 20px rgba(0, 0, 0, 0.2)',
+    transition: {
+      duration: 0.3,
+      ease: 'easeInOut',
+    },
+  },
+  tap: {
+    scale: 0.98,
+    boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.1)',
+    transition: {
+      duration: 0.1,
+      ease: 'easeInOut',
+    },
+  },
+};
+
+const buttonVariants = {
+  hover: {
+    scale: 1.05,
+    backgroundColor: '#2563eb', // Tailwind's bg-blue-600
+    boxShadow: '0px 8px 15px rgba(37, 99, 235, 0.3)',
+    transition: {
+      duration: 0.3,
+      ease: 'easeInOut',
+    },
+  },
+  tap: {
+    scale: 0.95,
+    backgroundColor: '#1d4ed8', // Tailwind's bg-blue-700
+    boxShadow: '0px 4px 10px rgba(29, 78, 216, 0.2)',
+    transition: {
+      duration: 0.1,
+      ease: 'easeInOut',
+    },
+  },
+};
+
 const Contact = ({ darkMode = false }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { formData, sentData, errors, isSubmitting, isSent } = state;
@@ -320,6 +356,9 @@ const Contact = ({ darkMode = false }) => {
 
   // Utilize the custom hook
   const { handleChange, validateForm } = useContactForm(dispatch, formData);
+
+  // State to control confetti
+  const [confettiActive, setConfettiActive] = useState(false);
 
   // Form Submission Handler
   const handleSubmit = async (e) => {
@@ -364,6 +403,7 @@ const Contact = ({ darkMode = false }) => {
 
       if (result.status === 200) {
         dispatch({ type: ACTION_TYPES.SUBMIT_SUCCESS });
+        setConfettiActive(true); // Trigger confetti
       } else {
         dispatch({
           type: ACTION_TYPES.SUBMIT_FAILURE,
@@ -385,6 +425,7 @@ const Contact = ({ darkMode = false }) => {
     if (formRef.current) {
       formRef.current.focus();
     }
+    setConfettiActive(false); // Reset confetti
   }, []);
 
   // Effect to focus on success message when sent
@@ -407,8 +448,14 @@ const Contact = ({ darkMode = false }) => {
   return (
     <motion.section
       id="contact"
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={{
+        initial: { opacity: 0, y: 50 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -50 },
+      }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
       className={`p-6 sm:p-8 ${themeClasses.container}`}
       aria-labelledby="contact-heading"
@@ -424,7 +471,9 @@ const Contact = ({ darkMode = false }) => {
           {/* Contact Form */}
           <motion.div
             className={`rounded-lg shadow-lg p-6 w-full ${themeClasses.formBackground}`}
-            whileHover={{ scale: 1.02 }}
+            variants={cardVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
             <AnimatePresence>
               {isSent ? (
@@ -445,12 +494,15 @@ const Contact = ({ darkMode = false }) => {
                   />
                   <p>Thank you, {sentData?.name || 'Guest'}!</p>
                   <p>Your message has been sent successfully. I'll get back to you soon.</p>
-                  <button
+                  <motion.button
                     onClick={handleReset}
                     className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
                   >
                     Send Another Message
-                  </button>
+                  </motion.button>
                 </motion.div>
               ) : (
                 <form
@@ -521,12 +573,15 @@ const Contact = ({ darkMode = false }) => {
                     </motion.p>
                   )}
                   <div className="flex items-center justify-center">
-                    <button
+                    <motion.button
                       type="submit"
                       disabled={isSubmitting}
-                      className={`bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 flex items-center ${
+                      className={`bg-blue-500 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 flex items-center ${
                         isSubmitting ? 'cursor-not-allowed opacity-75' : ''
                       }`}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
                       aria-disabled={isSubmitting}
                     >
                       {isSubmitting ? (
@@ -560,7 +615,7 @@ const Contact = ({ darkMode = false }) => {
                           Send Message
                         </>
                       )}
-                    </button>
+                    </motion.button>
                   </div>
                 </form>
               )}
@@ -570,7 +625,9 @@ const Contact = ({ darkMode = false }) => {
           {/* Contact Information */}
           <motion.div
             className={`rounded-lg shadow-lg p-6 w-full text-center ${themeClasses.infoBackground}`}
-            whileHover={{ scale: 1.02 }}
+            variants={cardVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
             <FontAwesomeIcon
               icon={faEnvelope}
@@ -578,18 +635,35 @@ const Contact = ({ darkMode = false }) => {
               aria-hidden="true"
             />
             <p className="text-lg sm:text-xl mb-2">n.verk06@gmai.com</p>
-            <button
+            <motion.button
               type="button"
               className="bg-blue-500 text-white font-bold py-3 px-6 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
               onClick={() =>
-                window.open('https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox?compose=CllgCJlKFcBWWjjqQSwZTKTwCKHJxKjHcCcCWWbNHKnxJRNzCcBRqphztfqRxCvnDMjFPmPMMHL')
+                window.open(
+                  'https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox?compose=CllgCJlKFcBWWjjqQSwZTKTwCKHJxKjHcCcCWWbNHKnxJRNzCcBRqphztfqRxCvnDMjFPmPMMHL'
+                )
               }
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
               aria-label="Send an email to n.verk06@gmai.com"
             >
               Email Me
-            </button>
+            </motion.button>
           </motion.div>
         </div>
+
+        {/* Confetti Animation */}
+        {confettiActive && (
+          <Confetti
+            numberOfPieces={500}
+            recycle={false}
+            onConfettiComplete={() => setConfettiActive(false)}
+            // Optional: Adjust the width and height to match the window
+            width={window.innerWidth}
+            height={window.innerHeight}
+          />
+        )}
       </div>
     </motion.section>
   );
