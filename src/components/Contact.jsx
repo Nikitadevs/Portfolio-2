@@ -18,6 +18,7 @@ import {
   faTimesCircle,
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
+import emailjs from 'emailjs-com'; // <-- Import EmailJS
 
 // Action Types
 const ACTION_TYPES = {
@@ -349,33 +350,28 @@ const Contact = ({ darkMode = false }) => {
     }
 
     try {
-      const backendURL =
-        process.env.REACT_APP_BACKEND_URL || 'https://nikitadev.netlify.app';
-
-      const response = await fetch(`${backendURL}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Send email using EmailJS
+      const result = await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+        {
           name: formData.name.trim(),
           email: formData.email.trim(),
           message: formData.message.trim(),
-        }),
-      });
+        },
+        process.env.REACT_APP_EMAILJS_USER_ID // Public Key
+      );
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (result.status === 200) {
         dispatch({ type: ACTION_TYPES.SUBMIT_SUCCESS });
       } else {
         dispatch({
           type: ACTION_TYPES.SUBMIT_FAILURE,
-          error: result.error || 'Form submission error. Please try again later.',
+          error: result.text || 'Form submission error. Please try again later.',
         });
       }
-    } catch (networkError) {
-      console.error(networkError);
+    } catch (error) {
+      console.error('EmailJS Error:', error);
       dispatch({
         type: ACTION_TYPES.SUBMIT_FAILURE,
         error: 'Network error. Please try again later.',
