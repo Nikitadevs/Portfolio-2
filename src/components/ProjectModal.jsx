@@ -1,8 +1,9 @@
+// ProjectModal.jsx
 import React, { useEffect, useRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faCode } from '@fortawesome/free-solid-svg-icons';
 import useFocusTrap from './useFocusTrap';
 import ImageCarousel from './ImageCarousel';
 
@@ -27,26 +28,6 @@ const modalVariants = {
     scale: 0.9,
     transition: { type: 'spring', stiffness: 300, damping: 25 },
   },
-};
-
-// Reusable Close Button Component
-const CloseButton = ({ onClose, darkMode }) => (
-  <button
-    onClick={onClose}
-    className={`absolute top-4 right-4 text-2xl p-2 rounded-full focus:outline-none focus:ring-2 transition-colors ${
-      darkMode
-        ? 'text-gray-300 hover:text-gray-500 focus:ring-gray-500'
-        : 'text-gray-700 hover:text-gray-900 focus:ring-gray-300'
-    }`}
-    aria-label="Close modal"
-  >
-    <FontAwesomeIcon icon={faTimes} />
-  </button>
-);
-
-CloseButton.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  darkMode: PropTypes.bool.isRequired,
 };
 
 // Reusable Technology Tag Component
@@ -199,9 +180,6 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode = false }) => {
             role="document"
             aria-describedby="modal-description"
           >
-            {/* Close Button */}
-            <CloseButton onClose={onClose} darkMode={darkMode} />
-
             {/* Modal Content */}
             <div className="modal-content mt-6">
               {/* Project Title */}
@@ -237,7 +215,9 @@ const ProjectModal = ({ isOpen, onClose, project, darkMode = false }) => {
               {/* Technologies Used */}
               {technologies.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-xl font-semibold mb-3">Technologies Used:</h3>
+                  <h3 className="text-xl font-semibold mb-3">
+                    Technologies Used:
+                  </h3>
                   <ul className="flex flex-wrap gap-3">
                     {technologies.map((tech, index) => (
                       <TechTag key={index} tech={tech} darkMode={darkMode} />
