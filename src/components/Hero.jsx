@@ -104,7 +104,7 @@ ParticleBackground.propTypes = {
  */
 const Hero = ({
   darkMode = false,
-  backgroundImage = '/path-to-your-image.jpg', // Make background image configurable
+  backgroundImage = '/path-to-your-image.jpg', // Configurable background image
 }) => {
   const controls = useAnimation();
   const { ref, inView } = useInView({
@@ -119,7 +119,7 @@ const Hero = ({
       if (window.innerWidth < 768) return 30;
       return 50;
     }
-    return 50; // Default particle count for SSR
+    return 50;
   }, []);
 
   const [particleCount, setParticleCount] = useState(getParticleCount());
@@ -132,7 +132,7 @@ const Hero = ({
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         setParticleCount(getParticleCount());
-      }, 200); // 200ms debounce
+      }, 200);
     };
 
     window.addEventListener('resize', handleResize);
@@ -157,7 +157,7 @@ const Hero = ({
     }
   }, []);
 
-  // Animation Variants
+  // Animation Variants with hover state for letters
   const letterVariants = {
     hidden: { y: 50, opacity: 0 },
     visible: (i) => ({
@@ -165,6 +165,7 @@ const Hero = ({
       opacity: 1,
       transition: { delay: i * 0.05, duration: 0.5 },
     }),
+    hover: { scale: 1.2, color: darkMode ? '#FFD700' : '#FF4500' },
   };
 
   const paragraphVariants = {
@@ -174,7 +175,7 @@ const Hero = ({
 
   const sentence = 'Welcome to My Portfolio';
 
-  // Memoize the animated letters to prevent unnecessary re-renders
+  // Memoize animated letters
   const animatedLetters = useMemo(
     () =>
       sentence.split('').map((char, index) => (
@@ -182,28 +183,30 @@ const Hero = ({
           key={index}
           custom={index}
           variants={letterVariants}
+          whileHover="hover"
           className="inline-block"
         >
           {char === ' ' ? '\u00A0' : char}
         </motion.span>
       )),
-    [sentence]
+    [sentence, letterVariants]
   );
 
   return (
     <section
       id="hero"
       ref={ref}
-      className={`relative flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8 ${
-        darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
-      }`}
+      className={`relative flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8 
+        ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}
       aria-labelledby="hero-title"
     >
-      {/* Parallax Background Image */}
+      {/* Parallax Background Image with blend mode */}
       <div
         className="absolute inset-0 bg-fixed bg-cover bg-center"
         style={{
           backgroundImage: `url("${backgroundImage}")`,
+          mixBlendMode: darkMode ? 'multiply' : 'screen',
+          filter: 'brightness(0.75)',
           zIndex: -3,
         }}
         aria-hidden="true"
@@ -227,11 +230,11 @@ const Hero = ({
       ></div>
 
       {/* Content Wrapper */}
-      <div className="relative z-10 flex flex-col items-center text-center">
+      <div className="relative z-10 flex flex-col items-center text-center space-y-6 sm:space-y-8">
         {/* Animated Heading */}
         <motion.h1
           id="hero-title"
-          className={`text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-extrabold mb-6 sm:mb-8 shadow-lg`}
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 sm:mb-8 drop-shadow-lg"
           initial="hidden"
           animate={controls}
           variants={{
@@ -248,7 +251,7 @@ const Hero = ({
 
         {/* Subheading with Typewriter Effect */}
         <motion.p
-          className="text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl px-4 sm:px-0 mb-8 sm:mb-12"
+          className="text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl px-4 sm:px-0 mb-8 sm:mb-12 drop-shadow-md"
           initial="hidden"
           animate={controls}
           variants={paragraphVariants}
@@ -286,14 +289,14 @@ const Hero = ({
           className="flex flex-col items-center"
         >
           <span
-            className={`text-xs sm:text-sm mb-2 transition-colors duration-200 ${
-              darkMode ? 'text-gray-200' : 'text-gray-700'
-            }`}
+            className={`text-xs sm:text-sm mb-2 transition-colors duration-200 
+              ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}
           >
             Scroll Down
           </span>
           <IoIosArrowDown
-            size={24}
+            size={32}
+            className="animate-bounce"
             color={darkMode ? '#ffffff' : '#000000'}
             aria-hidden="true"
           />

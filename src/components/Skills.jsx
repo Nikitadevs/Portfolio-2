@@ -16,13 +16,13 @@ import {
 } from 'react-icons/si';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Define the SkillCard component
+// Define the SkillCard component with enhanced visuals
 const SkillCard = React.memo(({ skill, darkMode }) => {
   return (
     <motion.div
-      className={`rounded-lg p-6 flex flex-col items-center shadow-lg ${
-        darkMode ? 'bg-gray-800' : 'bg-white'
-      }`}
+      className={`rounded-lg p-6 flex flex-col items-center transition-all duration-300 
+                  shadow-md hover:shadow-xl hover:scale-105 
+                  ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}
       whileHover={{ scale: 1.05 }}
       transition={{ type: 'spring', stiffness: 300 }}
       role="button"
@@ -41,7 +41,7 @@ const SkillCard = React.memo(({ skill, darkMode }) => {
   );
 });
 
-// Define the main Skills component
+// Define the main Skills component with visual enhancements
 const Skills = ({ darkMode }) => {
   const [showMore, setShowMore] = useState(false);
   const skillsRef = useRef(null); // Reference to the entire skills section
@@ -50,52 +50,52 @@ const Skills = ({ darkMode }) => {
   const essentialSkills = useMemo(() => [
     { 
       name: 'Docker', 
-      icon: <FaDocker className="text-4xl sm:text-5xl text-blue-500" />, 
+      icon: <FaDocker className="text-5xl text-blue-500" />, 
       description: 'Platform for containerizing applications, essential for modern DevOps practices.' 
     },
     { 
       name: 'Kubernetes', 
-      icon: <SiKubernetes className="text-4xl sm:text-5xl text-blue-500" />, 
+      icon: <SiKubernetes className="text-5xl text-blue-500" />, 
       description: 'System for automating deployment, scaling, and management of containerized applications.' 
     },
     { 
       name: 'AWS', 
-      icon: <FaAws className="text-4xl sm:text-5xl text-orange-500" />, 
+      icon: <FaAws className="text-5xl text-orange-500" />, 
       description: 'Comprehensive cloud services platform, crucial for cloud infrastructure management.' 
     },
     { 
       name: 'Git', 
-      icon: <FaGitAlt className="text-4xl sm:text-5xl text-red-500" />, 
+      icon: <FaGitAlt className="text-5xl text-red-500" />, 
       description: 'Version control system for tracking changes in code and facilitating collaboration.' 
     },
     { 
       name: 'Linux', 
-      icon: <FaLinux className="text-4xl sm:text-5xl text-green-500" />, 
+      icon: <FaLinux className="text-5xl text-green-500" />, 
       description: 'Operating system widely used in server environments, essential for server management.' 
     },
     { 
       name: 'Jenkins', 
-      icon: <FaJenkins className="text-4xl sm:text-5xl text-gray-500" />, 
+      icon: <FaJenkins className="text-5xl text-gray-500" />, 
       description: 'Automation server for continuous integration and delivery pipelines.' 
     },
     { 
       name: 'Ansible', 
-      icon: <SiAnsible className="text-4xl sm:text-5xl text-red-500" />, 
+      icon: <SiAnsible className="text-5xl text-red-500" />, 
       description: 'Tool for configuration management and automation, important for infrastructure as code.' 
     },
     { 
       name: 'Terraform', 
-      icon: <SiTerraform className="text-4xl sm:text-5xl text-purple-500" />, 
+      icon: <SiTerraform className="text-5xl text-purple-500" />, 
       description: 'Infrastructure as code tool for provisioning and managing cloud infrastructure.' 
     },
     { 
       name: 'Python', 
-      icon: <FaPython className="text-4xl sm:text-5xl text-yellow-500" />, 
+      icon: <FaPython className="text-5xl text-yellow-500" />, 
       description: 'Versatile scripting language, useful for automation and tool development.' 
     },
     { 
       name: 'Go (Golang)', 
-      icon: <SiGo className="text-4xl sm:text-5xl text-blue-500" />, 
+      icon: <SiGo className="text-5xl text-blue-500" />, 
       description: 'Efficient language for backend systems and building scalable applications.' 
     },
   ], []);
@@ -110,18 +110,17 @@ const Skills = ({ darkMode }) => {
   return (
     <section
       id="skills"
-      className={`py-12 ${
-        darkMode
-          ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white'
-          : 'bg-gradient-to-b from-white via-gray-100 to-white text-black'
-      }`}
+      className={`py-12 transition-colors duration-500
+                  ${darkMode
+                    ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white'
+                    : 'bg-gradient-to-b from-white via-gray-100 to-white text-black'}`}
       aria-labelledby="skills-heading"
-      ref={skillsRef} // Attach the ref to the entire section
+      ref={skillsRef}
     >
       <div className="container mx-auto text-center px-4">
         <h2
           id="skills-heading"
-          className="text-3xl sm:text-4xl font-extrabold mb-10"
+          className="text-4xl sm:text-5xl font-extrabold mb-10 border-b pb-4"
         >
           Skills
         </h2>
@@ -160,22 +159,19 @@ const Skills = ({ darkMode }) => {
             <motion.button
               onClick={() => {
                 if (showMore) {
-                  // When collapsing, first collapse the skills
                   setShowMore(false);
-                  // Wait for the collapse animation to finish before scrolling
                   setTimeout(() => {
                     scrollToSkills();
-                  }, 300); // Duration should match the animation duration
+                  }, 300);
                 } else {
                   setShowMore(true);
                 }
               }}
-              className={`px-6 py-3 text-sm font-semibold rounded-full shadow-md transition-colors ${
-                showMore
-                  ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-              whileTap={{ scale: 0.95 }}
+              className={`px-6 py-3 text-sm font-semibold rounded-full shadow-md transition-colors 
+                          focus:outline-none focus:ring-4
+                          ${showMore
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
               aria-expanded={showMore}
               aria-controls="additional-skills"
             >

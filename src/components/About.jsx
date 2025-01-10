@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -13,9 +13,8 @@ const About = ({ darkMode }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
 
-  const handleDownloadClick = () => {
-    if (isDownloading) return; // Prevent multiple clicks
-
+  const handleDownloadClick = useCallback(() => {
+    if (isDownloading) return;
     setIsDownloading(true);
     setDownloadComplete(false);
 
@@ -23,17 +22,17 @@ const About = ({ darkMode }) => {
     setTimeout(() => {
       setIsDownloading(false);
       setDownloadComplete(true);
-      setTimeout(() => setDownloadComplete(false), 3000); // Hide success message after 3 seconds
+      setTimeout(() => setDownloadComplete(false), 3000);
     }, 2000);
 
     // Trigger the actual file download
     const link = document.createElement('a');
-    link.href = '/path-to-your-resume.pdf'; // Replace with your resume file path
+    link.href = '/path-to-your-resume.pdf'; 
     link.download = 'Nikita_Resume.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [isDownloading]);
 
   const features = [
     {
@@ -56,7 +55,6 @@ const About = ({ darkMode }) => {
     },
   ];
 
-  // Animation variants
   const containerVariants = {
     hidden: {},
     visible: {
@@ -71,18 +69,39 @@ const About = ({ darkMode }) => {
     visible: { opacity: 1, y: 0 },
   };
 
+  const FeatureCard = ({ item }) => (
+    <motion.div
+      variants={itemVariants}
+      whileHover={{ scale: 1.05 }}
+      className={`rounded-xl p-8 flex flex-col items-center transform transition-all duration-300 shadow-lg ${
+        darkMode ? 'bg-gray-800' : 'bg-white'
+      } hover:shadow-2xl focus:outline-none focus:ring-4 ${
+        darkMode ? 'focus:ring-blue-300' : 'focus:ring-blue-500'
+      }`}
+      tabIndex={0}
+      role="button"
+      aria-pressed="false"
+      aria-label={item.title}
+    >
+      <FontAwesomeIcon
+        icon={item.icon}
+        className="text-5xl text-blue-500 mb-4"
+        aria-hidden="true"
+      />
+      <h3 className="text-2xl font-bold mb-2 text-center">{item.title}</h3>
+      <p className="text-base text-center">{item.description}</p>
+    </motion.div>
+  );
+
   return (
     <motion.section
       id="about"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className={`py-16 ${
-        darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'
-      }`}
+      className={`py-16 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}
     >
       <div className="container mx-auto flex flex-col md:flex-row items-center px-6 md:px-12">
-        {/* Profile Image and Download Button */}
         <motion.div
           className="md:w-1/3 flex flex-col items-center md:items-start mb-8 md:mb-0"
           variants={itemVariants}
@@ -90,7 +109,7 @@ const About = ({ darkMode }) => {
           <motion.img
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            src="/path-to-your-image.jpg" // Replace with your profile image path
+            src="/path-to-your-image.jpg"
             alt="Nikita's Profile Picture"
             className="w-40 h-40 md:w-48 md:h-48 rounded-full shadow-lg object-cover mb-6 border-4 border-blue-500"
           />
@@ -99,9 +118,7 @@ const About = ({ darkMode }) => {
             whileTap={{ scale: 0.95 }}
             onClick={handleDownloadClick}
             className={`px-6 py-3 ${
-              darkMode
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-blue-500 hover:bg-blue-600'
+              darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'
             } text-white font-bold rounded-full shadow-md flex items-center space-x-2 transition-all duration-300 focus:outline-none focus:ring-4 ${
               darkMode ? 'focus:ring-blue-300' : 'focus:ring-blue-500'
             }`}
@@ -132,26 +149,18 @@ const About = ({ darkMode }) => {
           </motion.button>
         </motion.div>
 
-        {/* About Text */}
         <motion.div
           className="md:w-2/3 flex flex-col items-center md:items-start text-center md:text-left space-y-4 px-4 md:px-0"
           variants={itemVariants}
         >
-          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
-            Hi, I'm Nikita
-          </h1>
+          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">Hi, I'm Nikita</h1>
           <p className="text-lg md:text-xl leading-relaxed">
-            I’m a passionate DevOps engineer focused on automating and optimizing
-            mission-critical deployments. I love leveraging CI/CD, cloud
-            infrastructure, and containerization to build scalable and efficient
-            systems.
+            I’m a passionate DevOps engineer focused on automating and optimizing mission-critical deployments. I love leveraging CI/CD, cloud
+            infrastructure, and containerization to build scalable and efficient systems.
           </p>
           <p className="text-lg md:text-xl leading-relaxed">
-            I thrive on staying ahead with the latest technologies, contributing
-            to open-source projects, and tackling challenging problems with
-            innovative solutions.
+            I thrive on staying ahead with the latest technologies, contributing to open-source projects, and tackling challenging problems with innovative solutions.
           </p>
-          {/* Social Media Icons */}
           <div className="flex space-x-6 mt-4">
             <a
               href="https://github.com/yourusername"
@@ -184,37 +193,10 @@ const About = ({ darkMode }) => {
         </motion.div>
       </div>
 
-      {/* Features Section */}
       <div className="container mx-auto mt-16 px-6 md:px-12">
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          variants={containerVariants}
-        >
+        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-8" variants={containerVariants}>
           {features.map((item, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              className={`rounded-xl p-8 flex flex-col items-center transform transition-all duration-300 shadow-lg ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              } hover:shadow-2xl focus:outline-none focus:ring-4 ${
-                darkMode ? 'focus:ring-blue-300' : 'focus:ring-blue-500'
-              }`}
-              tabIndex={0}
-              role="button"
-              aria-pressed="false"
-              aria-label={item.title}
-            >
-              <FontAwesomeIcon
-                icon={item.icon}
-                className="text-5xl text-blue-500 mb-4"
-                aria-hidden="true"
-              />
-              <h3 className="text-2xl font-bold mb-2 text-center">
-                {item.title}
-              </h3>
-              <p className="text-base text-center">{item.description}</p>
-            </motion.div>
+            <FeatureCard key={index} item={item} />
           ))}
         </motion.div>
       </div>

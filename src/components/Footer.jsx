@@ -1,13 +1,14 @@
 import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
+
 const Footer = ({ darkMode }) => {
   const currentYear = new Date().getFullYear();
+  const bgClass = darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800';
+  const textClass = darkMode ? 'text-gray-400' : 'text-gray-600';
 
   return (
     <motion.footer
-      className={`py-8 ${
-        darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'
-      } border-t border-gray-300`}
+      className={`py-8 ${bgClass} border-t border-gray-300`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -18,14 +19,9 @@ const Footer = ({ darkMode }) => {
           Footer
         </p>
         <p className="text-lg font-semibold mb-2">
-          <span className="font-bold">© {currentYear}</span> Your Name. All
-          rights reserved.
+          <span className="font-bold">© {currentYear}</span> Nikita Veretenko. All rights reserved.
         </p>
-        <p
-          className={`text-sm mb-4 ${
-            darkMode ? 'text-gray-400' : 'text-gray-600'
-          }`}
-        >
+        <p className={`text-sm mb-4 ${textClass}`}>
           Designed and built with{' '}
           <span role="img" aria-label="love">
             ❤️
@@ -37,7 +33,6 @@ const Footer = ({ darkMode }) => {
   );
 };
 
-// Prop types validation
 Footer.propTypes = {
   darkMode: PropTypes.bool.isRequired,
 };

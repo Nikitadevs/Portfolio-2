@@ -31,7 +31,6 @@ const ActionButton = memo(
     disabled,
     isLoading,
   }) => {
-    // Ripple effect state
     const [rippleArray, setRippleArray] = React.useState([]);
 
     const addRipple = (event) => {
@@ -42,8 +41,6 @@ const ActionButton = memo(
       const y = event.clientY - rect.top - size / 2;
       const newRipple = { x, y, size };
       setRippleArray((prev) => [...prev, newRipple]);
-
-      // Remove the ripple after animation
       setTimeout(() => {
         setRippleArray((prev) => prev.slice(1));
       }, 600);
@@ -82,7 +79,6 @@ const ActionButton = memo(
         }
         disabled={disabled}
       >
-        {/* Ripple Effect */}
         {rippleArray.map((ripple, index) => (
           <span
             key={index}
@@ -96,7 +92,6 @@ const ActionButton = memo(
           ></span>
         ))}
 
-        {/* Loading Spinner */}
         {isLoading && (
           <svg
             className="animate-spin h-5 w-5 mr-3 text-white"
@@ -121,7 +116,6 @@ const ActionButton = memo(
           </svg>
         )}
 
-        {/* Icon with Dynamic Animations */}
         {icon && !isLoading && (
           <motion.div
             className="mr-3 text-lg"
@@ -133,7 +127,6 @@ const ActionButton = memo(
           </motion.div>
         )}
 
-        {/* Button Label */}
         <span className="text-base">{label}</span>
       </motion.button>
     );
@@ -168,24 +161,12 @@ const ThemeToggle = ({ darkMode, toggleDarkMode }) => (
     aria-label="Toggle Dark Mode"
     whileTap={{ scale: 0.85 }}
   >
-    <motion.div
-      animate={{ rotate: darkMode ? 0 : 180 }}
-      transition={{ duration: 0.6 }}
-      className="relative"
-    >
-      {/* Background Pulse */}
+    <motion.div animate={{ rotate: darkMode ? 0 : 180 }} transition={{ duration: 0.6 }} className="relative">
       <motion.span
-        className={`absolute inset-0 rounded-full ${
-          darkMode ? 'bg-gray-700' : 'bg-yellow-400'
-        } opacity-50`}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.5, 0.3, 0.5],
-        }}
+        className={`absolute inset-0 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-yellow-400'} opacity-50`}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
         transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
       ></motion.span>
-
-      {/* Icon */}
       <FontAwesomeIcon
         icon={darkMode ? faSun : faMoon}
         className="relative text-xl text-yellow-500 dark:text-gray-200"
@@ -254,7 +235,7 @@ const FallbackUI = forwardRef(
         <motion.div
           className={`min-h-screen flex flex-col justify-center items-center px-6 relative ${
             darkMode
-              ? 'bg-gradient-to-b from-gray-800 to-gray-900 text-red-400'
+              ? 'bg-gradient-to-b from-gray-800 via-gray-900 to-black text-red-400'
               : 'bg-gradient-to-b from-red-100 to-red-200 text-red-600'
           }`}
           initial={{ opacity: 0 }}
@@ -268,23 +249,20 @@ const FallbackUI = forwardRef(
           tabIndex="-1"
           ref={ref}
         >
-          {/* Theme Toggle Button */}
           <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
 
-          {/* Error Illustration */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="mb-6"
           >
-            <ErrorIllustration className="w-32 h-32 mb-4" ariaHidden />
+            <ErrorIllustration className="w-40 h-40 mb-4" ariaHidden />
           </motion.div>
 
-          {/* Error Title */}
           <motion.h1
             id="error-title"
-            className="text-4xl font-extrabold mb-4 text-center"
+            className="text-5xl font-extrabold mb-4 text-center"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6, ease: 'easeOut' }}
@@ -292,10 +270,9 @@ const FallbackUI = forwardRef(
             {t('errorTitle', 'Oops! Something Went Wrong.')}
           </motion.h1>
 
-          {/* Error Description */}
           <motion.p
             id="error-description"
-            className="text-lg mb-8 text-center max-w-lg px-4"
+            className="text-xl mb-8 text-center max-w-2xl px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
@@ -306,17 +283,14 @@ const FallbackUI = forwardRef(
             )}
           </motion.p>
 
-          {/* Action Buttons */}
           <motion.div
-            className="flex flex-wrap justify-center gap-6"
+            className="flex flex-wrap justify-center gap-6 mb-8"
             initial="hidden"
             animate="visible"
             variants={{
               hidden: {},
               visible: {
-                transition: {
-                  staggerChildren: 0.2,
-                },
+                transition: { staggerChildren: 0.2 },
               },
             }}
           >
@@ -348,7 +322,6 @@ const FallbackUI = forwardRef(
             />
           </motion.div>
 
-          {/* Contact Support and Additional Links */}
           <motion.div
             className="mt-8 flex flex-col items-center space-y-2"
             initial={{ opacity: 0 }}
@@ -358,9 +331,7 @@ const FallbackUI = forwardRef(
             <a
               href="mailto:support@example.com?subject=App%20Error%20Report"
               className={`text-sm underline ${
-                darkMode
-                  ? 'text-red-300 hover:text-red-200'
-                  : 'text-red-700 hover:text-red-500'
+                darkMode ? 'text-red-300 hover:text-red-200' : 'text-red-700 hover:text-red-500'
               }`}
             >
               {t('contactSupport', 'Contact Support')}
@@ -368,9 +339,7 @@ const FallbackUI = forwardRef(
             <a
               href="/faq"
               className={`text-sm underline ${
-                darkMode
-                  ? 'text-blue-300 hover:text-blue-200'
-                  : 'text-blue-700 hover:text-blue-500'
+                darkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-500'
               }`}
             >
               {t('viewFAQs', 'View FAQs')}
@@ -378,16 +347,13 @@ const FallbackUI = forwardRef(
             <a
               href="/documentation"
               className={`text-sm underline ${
-                darkMode
-                  ? 'text-blue-300 hover:text-blue-200'
-                  : 'text-blue-700 hover:text-blue-500'
+                darkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-500'
               }`}
             >
               {t('readDocumentation', 'Read Documentation')}
             </a>
           </motion.div>
 
-          {/* Error Details (Development Mode) */}
           {process.env.NODE_ENV === 'development' && error && errorInfo && (
             <AnimatePresence>
               <motion.details
@@ -396,9 +362,7 @@ const FallbackUI = forwardRef(
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ delay: 1, duration: 0.6, ease: 'easeOut' }}
-                className={`${
-                  darkMode ? 'text-red-300' : 'text-red-700'
-                } bg-opacity-50 p-4 rounded-md w-full max-w-2xl`}
+                className={`${darkMode ? 'text-red-300' : 'text-red-700'} bg-opacity-50 p-4 rounded-md w-full max-w-2xl`}
               >
                 <summary className="cursor-pointer underline">
                   {t('clickForDetails', 'Click for error details')}
@@ -410,7 +374,6 @@ const FallbackUI = forwardRef(
             </AnimatePresence>
           )}
 
-          {/* Toast Notifications */}
           <ToastContainer
             position="top-right"
             autoClose={5000}
@@ -458,62 +421,36 @@ class ErrorBoundary extends Component {
     this.errorRef = createRef();
   }
 
-  /**
-   * Updates the state so the next render shows the fallback UI.
-   * @param {Error} error The error that was thrown.
-   * @returns {Object} Updated state.
-   */
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
 
-  /**
-   * Logs the error information and captures it using Sentry.
-   * @param {Error} error The error that was thrown.
-   * @param {Object} errorInfo Additional error information.
-   */
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
     Sentry.captureException(error, { extra: errorInfo });
-    // Additional logging can be done here
   }
 
-  /**
-   * Shifts focus to the error message when an error is caught.
-   * @param {Object} prevProps Previous props.
-   * @param {Object} prevState Previous state.
-   */
   componentDidUpdate(prevProps, prevState) {
     if (!prevState.hasError && this.state.hasError) {
-      // Shift focus to the error message
       this.errorRef.current?.focus();
     }
   }
 
-  /**
-   * Reloads the current page.
-   */
   handleReload = () => {
     window.location.reload();
   };
 
-  /**
-   * Navigates the user to the home page.
-   */
   handleGoHome = () => {
     const { homePath } = this.props;
     window.location.href = homePath;
   };
 
-  /**
-   * Handles the reporting of the error by the user.
-   */
   handleReport = () => {
     this.setState({ isReporting: true });
     try {
       const { error, errorInfo } = this.state;
       const userAgent = navigator.userAgent;
-      const appState = {}; // Include relevant state if available
+      const appState = {};
 
       const report = {
         error: error.toString(),
@@ -523,9 +460,7 @@ class ErrorBoundary extends Component {
         timestamp: new Date().toISOString(),
       };
 
-      // Send the report to Sentry or your preferred backend
       Sentry.captureException(error, { extra: report });
-
       toast.success('Error reported successfully!');
     } catch (err) {
       toast.error('Failed to report error.');
@@ -534,9 +469,6 @@ class ErrorBoundary extends Component {
     }
   };
 
-  /**
-   * Toggles between dark and light modes.
-   */
   toggleDarkMode = () => {
     this.setState(
       (prevState) => ({ darkMode: !prevState.darkMode }),
