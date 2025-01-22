@@ -1,16 +1,10 @@
 // src/components/ErrorBoundary.jsx
 
-import React, { Component, memo, createRef, forwardRef } from 'react';
+import React, { Component, memo, createRef, forwardRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faRedo,
-  faHome,
-  faBug,
-  faSun,
-  faMoon,
-} from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faHome, faSun, faMoon, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import * as Sentry from '@sentry/react';
 import { useTranslation } from 'react-i18next';
 import { ToastContainer, toast } from 'react-toastify';
@@ -18,7 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 /**
  * **ActionButton Component**
- * A memoized button component with advanced hover and active animations.
+ * A memoized button component with enhanced animations and ripple effect.
  */
 const ActionButton = memo(
   ({
@@ -26,7 +20,6 @@ const ActionButton = memo(
     icon,
     label,
     bgColor,
-    hoverBgColor,
     ariaLabel,
     disabled,
     isLoading,
@@ -54,8 +47,8 @@ const ActionButton = memo(
             onClick();
           }
         }}
-        className={`relative overflow-hidden ${bgColor} text-white font-semibold py-3 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-shadow flex items-center shadow-lg ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        className={`relative overflow-hidden ${bgColor} text-white font-medium py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-shadow flex items-center shadow-md ${
+          disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
         }`}
         aria-label={ariaLabel}
         aria-disabled={disabled}
@@ -63,7 +56,7 @@ const ActionButton = memo(
           !disabled
             ? {
                 scale: 1.05,
-                boxShadow: '0px 20px 30px rgba(0, 0, 0, 0.3)',
+                boxShadow: '0px 15px 25px rgba(0, 0, 0, 0.3)',
                 transition: { duration: 0.3 },
               }
             : {}
@@ -82,7 +75,7 @@ const ActionButton = memo(
         {rippleArray.map((ripple, index) => (
           <span
             key={index}
-            className="absolute bg-white opacity-25 rounded-full animate-ripple"
+            className="absolute bg-white opacity-20 rounded-full animate-ripple"
             style={{
               top: ripple.y,
               left: ripple.x,
@@ -138,7 +131,6 @@ ActionButton.propTypes = {
   icon: PropTypes.object,
   label: PropTypes.string.isRequired,
   bgColor: PropTypes.string.isRequired,
-  hoverBgColor: PropTypes.string.isRequired,
   ariaLabel: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
   isLoading: PropTypes.bool,
@@ -152,19 +144,27 @@ ActionButton.defaultProps = {
 
 /**
  * **ThemeToggle Component**
- * A button to toggle between dark and light modes with smooth icon morphing and background pulse.
+ * A button to toggle between dark and light modes with smooth icon transitions.
  */
 const ThemeToggle = ({ darkMode, toggleDarkMode }) => (
   <motion.button
     onClick={toggleDarkMode}
-    className="absolute top-4 right-4 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2"
+    className={`absolute top-6 right-6 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+      darkMode ? 'bg-gray-700' : 'bg-yellow-400'
+    }`}
     aria-label="Toggle Dark Mode"
     whileTap={{ scale: 0.85 }}
   >
-    <motion.div animate={{ rotate: darkMode ? 0 : 180 }} transition={{ duration: 0.6 }} className="relative">
+    <motion.div
+      animate={{ rotate: darkMode ? 0 : 180 }}
+      transition={{ duration: 0.6 }}
+      className="relative"
+    >
       <motion.span
-        className={`absolute inset-0 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-yellow-400'} opacity-50`}
-        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
+        className={`absolute inset-0 rounded-full ${
+          darkMode ? 'bg-gray-700' : 'bg-yellow-400'
+        } opacity-50`}
+        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.3, 0.5] }}
         transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
       ></motion.span>
       <FontAwesomeIcon
@@ -211,6 +211,70 @@ ErrorIllustration.defaultProps = {
 };
 
 /**
+ * **ErrorDetails Component**
+ * A custom expandable panel to display error details with enhanced UI/UX.
+ */
+const ErrorDetails = ({ error, errorInfo, darkMode }) => {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDetails = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  return (
+    <div className="w-full max-w-2xl mt-6">
+      <motion.button
+        onClick={toggleDetails}
+        className={`flex items-center justify-between w-full px-4 py-3 bg-opacity-50 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          darkMode
+            ? 'bg-red-700 text-red-200 hover:bg-red-600'
+            : 'bg-red-200 text-red-700 hover:bg-red-300'
+        }`}
+        aria-expanded={isOpen}
+        aria-controls="error-details-content"
+        initial={false}
+        animate={{ backgroundColor: isOpen ? (darkMode ? '#e53e3e' : '#feb2b2') : undefined }}
+      >
+        <span className="font-medium">
+          {t('clickForDetails', 'View Error Details')}
+        </span>
+        <FontAwesomeIcon icon={isOpen ? faChevronUp : faChevronDown} />
+      </motion.button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            id="error-details-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            className={`mt-2 p-4 rounded-md overflow-hidden ${
+              darkMode ? 'bg-gray-800 text-red-300' : 'bg-red-100 text-red-700'
+            }`}
+          >
+            <details open>
+              <summary className="cursor-pointer font-semibold underline mb-2">
+                {t('errorDetails', 'Error Details')}
+              </summary>
+              <p className="whitespace-pre-wrap">{error.toString()}</p>
+              <br />
+              <p className="whitespace-pre-wrap">{errorInfo.componentStack}</p>
+            </details>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+ErrorDetails.propTypes = {
+  error: PropTypes.object.isRequired,
+  errorInfo: PropTypes.object.isRequired,
+  darkMode: PropTypes.bool.isRequired,
+};
+
+/**
  * **FallbackUI Component**
  * The UI displayed when an error is caught by the ErrorBoundary with enhanced UI/UX.
  */
@@ -221,8 +285,6 @@ const FallbackUI = forwardRef(
       toggleDarkMode,
       handleReload,
       handleGoHome,
-      handleReport,
-      isReporting,
       error,
       errorInfo,
     },
@@ -255,9 +317,9 @@ const FallbackUI = forwardRef(
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="mb-6"
+            className="mb-8"
           >
-            <ErrorIllustration className="w-40 h-40 mb-4" ariaHidden />
+            <ErrorIllustration className="w-48 h-48 mb-6" ariaHidden />
           </motion.div>
 
           <motion.h1
@@ -272,14 +334,14 @@ const FallbackUI = forwardRef(
 
           <motion.p
             id="error-description"
-            className="text-xl mb-8 text-center max-w-2xl px-4"
+            className="text-lg mb-8 text-center max-w-2xl px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
           >
             {t(
               'errorDescription',
-              "We're sorry for the inconvenience. Please try reloading the page or contact support if the problem persists."
+              "We're sorry for the inconvenience. Please try reloading the page or go back to the homepage."
             )}
           </motion.p>
 
@@ -299,7 +361,6 @@ const FallbackUI = forwardRef(
               icon={faRedo}
               label={t('reloadPage', 'Reload Page')}
               bgColor="bg-red-600"
-              hoverBgColor="bg-red-700"
               ariaLabel={t('reloadPage', 'Reload the page')}
             />
             <ActionButton
@@ -307,71 +368,12 @@ const FallbackUI = forwardRef(
               icon={faHome}
               label={t('goHome', 'Go Home')}
               bgColor="bg-green-600"
-              hoverBgColor="bg-green-700"
               ariaLabel={t('goHome', 'Navigate to home page')}
             />
-            <ActionButton
-              onClick={handleReport}
-              icon={faBug}
-              label={t('reportIssue', 'Report Issue')}
-              bgColor="bg-purple-600"
-              hoverBgColor="bg-purple-700"
-              ariaLabel={t('reportIssue', 'Report this issue')}
-              disabled={isReporting}
-              isLoading={isReporting}
-            />
-          </motion.div>
-
-          <motion.div
-            className="mt-8 flex flex-col items-center space-y-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.6, ease: 'easeOut' }}
-          >
-            <a
-              href="mailto:support@example.com?subject=App%20Error%20Report"
-              className={`text-sm underline ${
-                darkMode ? 'text-red-300 hover:text-red-200' : 'text-red-700 hover:text-red-500'
-              }`}
-            >
-              {t('contactSupport', 'Contact Support')}
-            </a>
-            <a
-              href="/faq"
-              className={`text-sm underline ${
-                darkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-500'
-              }`}
-            >
-              {t('viewFAQs', 'View FAQs')}
-            </a>
-            <a
-              href="/documentation"
-              className={`text-sm underline ${
-                darkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-500'
-              }`}
-            >
-              {t('readDocumentation', 'Read Documentation')}
-            </a>
           </motion.div>
 
           {process.env.NODE_ENV === 'development' && error && errorInfo && (
-            <AnimatePresence>
-              <motion.details
-                style={{ whiteSpace: 'pre-wrap', marginTop: '1rem' }}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ delay: 1, duration: 0.6, ease: 'easeOut' }}
-                className={`${darkMode ? 'text-red-300' : 'text-red-700'} bg-opacity-50 p-4 rounded-md w-full max-w-2xl`}
-              >
-                <summary className="cursor-pointer underline">
-                  {t('clickForDetails', 'Click for error details')}
-                </summary>
-                <p>{error.toString()}</p>
-                <br />
-                <p>{errorInfo.componentStack}</p>
-              </motion.details>
-            </AnimatePresence>
+            <ErrorDetails error={error} errorInfo={errorInfo} darkMode={darkMode} />
           )}
 
           <ToastContainer
@@ -396,8 +398,6 @@ FallbackUI.propTypes = {
   toggleDarkMode: PropTypes.func.isRequired,
   handleReload: PropTypes.func.isRequired,
   handleGoHome: PropTypes.func.isRequired,
-  handleReport: PropTypes.func.isRequired,
-  isReporting: PropTypes.bool.isRequired,
   error: PropTypes.object,
   errorInfo: PropTypes.object,
 };
@@ -416,7 +416,6 @@ class ErrorBoundary extends Component {
       error: null,
       errorInfo: null,
       darkMode: storedTheme,
-      isReporting: false,
     };
     this.errorRef = createRef();
   }
@@ -445,30 +444,6 @@ class ErrorBoundary extends Component {
     window.location.href = homePath;
   };
 
-  handleReport = () => {
-    this.setState({ isReporting: true });
-    try {
-      const { error, errorInfo } = this.state;
-      const userAgent = navigator.userAgent;
-      const appState = {};
-
-      const report = {
-        error: error.toString(),
-        componentStack: errorInfo?.componentStack,
-        userAgent,
-        appState,
-        timestamp: new Date().toISOString(),
-      };
-
-      Sentry.captureException(error, { extra: report });
-      toast.success('Error reported successfully!');
-    } catch (err) {
-      toast.error('Failed to report error.');
-    } finally {
-      this.setState({ isReporting: false });
-    }
-  };
-
   toggleDarkMode = () => {
     this.setState(
       (prevState) => ({ darkMode: !prevState.darkMode }),
@@ -479,7 +454,7 @@ class ErrorBoundary extends Component {
   };
 
   render() {
-    const { hasError, darkMode, isReporting, error, errorInfo } = this.state;
+    const { hasError, darkMode, error, errorInfo } = this.state;
     const { customFallback, customFallbackProps } = this.props;
 
     if (hasError) {
@@ -494,8 +469,6 @@ class ErrorBoundary extends Component {
           toggleDarkMode={this.toggleDarkMode}
           handleReload={this.handleReload}
           handleGoHome={this.handleGoHome}
-          handleReport={this.handleReport}
-          isReporting={isReporting}
           error={error}
           errorInfo={errorInfo}
         />
