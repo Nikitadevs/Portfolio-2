@@ -234,7 +234,7 @@ const Hero = ({
         {/* Animated Heading */}
         <motion.h1
           id="hero-title"
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 sm:mb-8 text-6xl drop-shadow-lg"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 sm:mb-8 text-4xl drop-shadow-lg"
           initial="hidden"
           animate={controls}
           variants={{
