@@ -200,7 +200,7 @@ const Header = ({ toggleDarkMode, darkMode }) => {
             <motion.a
               key={index}
               href={`#${section}`}
-              className="relative flex flex-col items-center group"
+              className="relative flex flex-col items-center group hover:underline transition-shadow duration-300"
               variants={navLinkVariants}
               initial="initial"
               whileHover="hover"

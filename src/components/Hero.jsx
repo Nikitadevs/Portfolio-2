@@ -165,7 +165,7 @@ const Hero = ({
       opacity: 1,
       transition: { delay: i * 0.05, duration: 0.5 },
     }),
-    hover: { scale: 1.2, color: darkMode ? '#FFD700' : '#FF4500' },
+    hover: { scale: 1.2 } // Removed color change here
   };
 
   const paragraphVariants = {
@@ -237,6 +237,7 @@ const Hero = ({
           className="text-5xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold mb-8 drop-shadow-lg"
           initial="hidden"
           animate={controls}
+          style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }} // Added text shadow
           variants={{
             visible: {
               transition: {

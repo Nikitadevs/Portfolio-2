@@ -13,6 +13,14 @@ export default {
       screens: {
         'xs': '475px',
       },
+      colors: {
+        primary: '#2563eb',  // blue-600
+        accent: '#F59E0B',   // amber-400
+      },
+      transitionDuration: {
+        300: '300ms',
+        500: '500ms',
+      },
       // Add custom colors, spacing, etc.
     },
   },
